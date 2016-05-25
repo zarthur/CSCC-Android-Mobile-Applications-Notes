@@ -103,3 +103,7 @@ To stop the application, either quit the emulator application or click the stop
 icon in the the Android Studio toolbar.
 
 ## Material Design
+Google provides a set of design/style guides that should be followed when
+creating an Android app.  This guide can be found at  
+http://www.google.com/design/spec/material-design/introduction.html.  You
+should review the guide.
