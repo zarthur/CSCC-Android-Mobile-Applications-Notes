@@ -37,7 +37,7 @@ install.  Select all the available components, and click **Next**.
 Click **Finish** to begin downloading and installing the SDK components.  When
 installation is complete, click **Finish** again.
 
-### Hello World!
+### Our First App
 The initial steps of developing a new application in Android Studio are similar
 to the steps of developing a new application in IntelliJ.  When presented with
 the Android Studio welcome screen, select **Start a new Android Studio
@@ -48,8 +48,9 @@ project**.
 Next, choose an application name, a domain name, and a project location.  
 Android Studio will use the domain name to create the appropriate package name.
 
-For our first application, we'll be creating the same GeoQuiz app as is
-presented in the *Android Programming* book.  
+For our first application, we'll be creating an app that is similar to the
+*GeoQuiz* app presented in the *Android Programming* book.  Our app will be
+*TriviaQuiz*.
 
 ![New Project](images/studio-new-2.png)
 
@@ -76,7 +77,7 @@ application.  Once generation is complete, we'll be presented with a window
 that looks very similar to IntelliJ.  We can open the *Project* pane and
 examine the project's directory structure.  
 
-Two import files are `HelloActivity.java` and `activity_hello.xml`.  The Java
+Two import files are `QuizActivity.java` and `activity_quiz.xml`.  The Java
 file contains the code that will be executed when our application is run.  The
 XML file contains information about how graphical elements are displayed.  We
 will discuss layouts more later.  
@@ -111,12 +112,11 @@ icon in the the Android Studio toolbar.
 ###Adding Functionality
 Let's expand on this by adding more functionality to our app.  To add
 functionality, we'll need to expand our user interface.  Our user interface
-will consist of a text box that displays a question's text and two buttons that
-allow the user to indicate whether a statement is true or false.  While it's
-possible to directly associate text representing labels and such with widgets,
+will consist of a text box that displays a question's text and four buttons
+that present possible answers to the user. While it's possible to directly
+associate text representing labels and such with buttons and text boxes,
 Android allows us to specify string values in a string resource file.  Using
-a string resource file makes it easier to support different languages and to
-alter the text programatically.  
+a string resource file makes it easier to support different languages.
 
 Open the `res/values/string.xml` file.  This is the default string resource
 file created with all new projects.  The content of this file is XML and
@@ -126,16 +126,17 @@ content of the string resource file with the following:
 
 ```xml
 <resources>
-    <string name="app_name">GeoQuiz</string>
-    <string name="question_text">Seattle is the capital of Washington.</string>
-    <string name="true_button">True</string>
-    <string name="false_button">False</string>
+    <string name="app_name">TriviaQuiz</string>
+    <string name="question_text">What is the capital of Washington?</string>
+    <string name="option_1_button">Seattle</string>
+    <string name="option_2_button">Tacoma</string>
+    <string name="option_3_button">Olympia</string>
+    <string name="option_4_button">Spokane</string>
 </resources>
 ```
 
-We can see that four strings are defined here.  One of them is named
-"question_text" and its value is "Seattle is the capital of Washington."
-
+We can see that six strings are defined here.  One of them is named
+"question_text" and its value is "Seattle is the capital of Washington."  
 
 Now that we've defined the strings we'll need, we can return to the
 `activity_quiz.xml` layout file. Examining the *activity_quiz.xml* layout, we
@@ -143,7 +144,7 @@ can see that our app layout includes a *RelativeLayout* and a *TextView*
 widget.  Layouts are used to arrange items on the screen and widgets are used
 to interact with users; we'll talk about both of these more in later lectures.
 
-For the *GeoQuiz* app we're making, we don't want either of these elements.  
+For the *TriviaQuiz* app we're making, we don't want either of these elements.  
 While we can use the design view to add and remove most layouts and widgets, we
 can't use it to remove a top-level layout.  We'd like to change the top-level
 layout from a *RelativeLayout* to a vertical *LinearLayout*.  To do this, click
@@ -163,24 +164,23 @@ the *Text* tab and replace the XML text with the following:
 We can now switch back to design view and add a plain *TextView* near the
 center of the layout by dragging and dropping a "Plain TextView" widget from
 the *Palette* to the design view.  In the *Properties* section, set the text to
-`@string/question_text`.  The text should be replaced with "Seattle is the
-capital of Washington."  Additionally, set the padding of the *TextView* to
+`@string/question_text`.  The text should be replaced with "What is the
+capital of Washington?"  Additionally, set the padding of the *TextView* to
 `24dp`; you can do this by expanding the `padding` property in the *Properties*
 section and setting the value for `all`.
 
-Drag and drop a horizontal *LinearLayout* below the *TextView* widget; this
-will be used to layout two buttons.  Drag and drop two *Button* widgets into
-the new *LinearLayout*.  In order to center the buttons on the screen, select
-the horizontal *LinearLayout* from the *Component Tree* and set `layout:width`
-to `wrap_content` in the *Properties* section.  
+Next, drag and drop four *Button* widgets, one-by-one, into the *LinearLayout*
+below the *TextView* widget.  
 
-![Layout](images/geoquiz-1.png)
+![Layout](images/triviaquiz-1.png)
 
 We can set the *Button* widgets' text using the string resources we previously
-created; set the first and second button's `text` property to
-`@string/true_button` and `@string/false_button`, respectively.  While we're
-changing *Button* properties, let's also change their IDs; this will be useful
-later.  Change the IDs to `true_button` and `false_button` as appropriate.
+created; set the buttons' `text` property to `@string/option_1_button`,
+`@string/option_2_button`, `@string/option_3_button`, and
+`@string/option_4_button` While we're changing *Button* properties, let's also
+change their IDs (this will be useful later) and set their `layout:width` to
+`fill_parent`.  Change the IDs to `option_1_button`, `option_2_button`,
+`option_3_button`, and `option_4_button`.
 
 Though we can design entire interfaces with the Layout Designer, we should be
 familiar with the XML associated with layouts and widgets.  The XML for our
@@ -199,32 +199,42 @@ current interface should look something like this:
         android:layout_height="wrap_content"
         android:text="@string/question_text"
         android:id="@+id/textView"
+        android:layout_gravity="center_horizontal"
         android:padding="24dp" />
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="wrap_content"
+    <Button
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal">
+        android:text="@string/option_1_button"
+        android:id="@+id/option_1_button"
+        android:layout_gravity="center_horizontal" />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/true_button"
-            android:text="@string/true_button" />
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/option_2_button"
+        android:id="@+id/option_2_button"
+        android:layout_gravity="center_horizontal" />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/false_button"
-            android:text="@string/false_button" />
-    </LinearLayout>
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/option_3_button"
+        android:id="@+id/option_3_button"
+        android:layout_gravity="center_horizontal" />
+
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/option_4_button"
+        android:id="@+id/option_4_button"
+        android:layout_gravity="center_horizontal" />
 </LinearLayout>
 ```
 
 If we run the app, it now looks like this:
 
-![GeoQuiz](images/geoquiz-2.png)
+![GeoQuiz](images/triviaquiz-2.png)
 
 Notice that while the widgets we've added are displayed and we can click the
 buttons, nothing happens when we do.  To add functionality to the buttons,
@@ -234,7 +244,7 @@ already exists.
 In the `QuizActivity.java` file, you should see code similar to the following:
 
 ```java
-package com.arthurneuman.geoquiz;
+package com.arthurneuman.triviaquiz;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
