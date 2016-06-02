@@ -272,13 +272,13 @@ A **resource** is part of an application that is not code such as media or data
 files.  Resources are stored in the `res` folder of a project.  
 
 We'd like to add code that will allow us to interact with our widgets.  The
-*Activity* class has a *findViewByID()* method with the following signature:
+*Activity* class has a *findViewById()* method with the following signature:
 
 `public View findViewByID(int id)`
 
 Our *Button* widgets are instances of the *Button* class which is a subclass
 of *View*.  The IDs we specified for our buttons correspond to unique integers
-so we can use the *findViewByID()* method to access the buttons.  The following
+so we can use the *findViewById()* method to access the buttons.  The following
 code defines four instance fields and assigns values to them in the
 *onCreate()* method.
 
@@ -307,6 +307,9 @@ public class QuizActivity extends AppCompatActivity {
     }
 }
 ```
+Notice that because *findViewById()* returns a *View* instance and we'd like
+to work with *Button* instances, we have to cast the value returned by the
+method call.
 
 Listeners
 
