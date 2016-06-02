@@ -270,6 +270,46 @@ its resource ID - this is similar to how we identified strings for our widgets.
 A **resource** is part of an application that is not code such as media or data
 files.  Resources are stored in the `res` folder of a project.  
 
+We'd like to add code that will allow us to interact with our widgets.  The
+*Activity* class has a *findViewByID()* method with the following signature:
+
+`public View findViewByID(int id)`
+
+Our *Button* widgets are instances of the *Button* class which is a subclass
+of *View*.  The IDs we specified for our buttons correspond to unique integers
+so we can use the *findViewByID()* method to access the buttons.  The following
+code defines four instance fields and assigns values to them in the
+*onCreate()* method.
+
+```Java
+package com.arthurneuman.triviaquiz;
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.widget.Button;
+
+public class QuizActivity extends AppCompatActivity {
+    private Button option1Button;
+    private Button option2Button;
+    private Button option3Button;
+    private Button option4Button;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_quiz);
+
+        option1Button = (Button) findViewById(R.id.option_1_button);
+        option2Button = (Button) findViewById(R.id.option_2_button);
+        option3Button = (Button) findViewById(R.id.option_3_button);
+        option4Button = (Button) findViewById(R.id.option_4_button);
+    }
+}
+```
+
+Listeners
+
+Toasts
 
 
 ## Material Design
