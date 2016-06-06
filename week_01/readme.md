@@ -235,7 +235,7 @@ current interface should look something like this:
 
 If we run the app, it now looks like this:
 
-![GeoQuiz](images/triviaquiz-2.png)
+![TriviaQuiz](images/triviaquiz-2.png)
 
 Notice that while the widgets we've added are displayed and we can click the
 buttons, nothing happens when we do.  To add functionality to the buttons,
@@ -311,9 +311,153 @@ Notice that because *findViewById()* returns a *View* instance and we'd like
 to work with *Button* instances, we have to cast the value returned by the
 method call.
 
-Listeners
+Android applications are usually event driven, after they start, they wait for
+an event to occur before doing something else.  Events include user interaction
+with the interface such as through button presses.  
 
-Toasts
+So, how can we make our app respond to events?  We can do this by making use of
+**listeners** - objects that respond to the occurrence of an event.  The
+Android SDK includes various listener interfaces for handling different types
+of events; a listener object simply has to implement the appropriate interface.  
+If we'd like to be able to handle a button press/click event, we can implement
+the *View.OnClickListener* interface.  We can use anonymous classes to quickly
+create listeners and assign them to the objects.  For example, we can add
+code to the *QuizActivity.onCreate()* method that creates and logs a debug
+message regarding the event.
+
+```java
+package com.arthurneuman.triviaquiz;
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+
+public class QuizActivity extends AppCompatActivity {
+    private Button option1Button;
+    private Button option2Button;
+    private Button option3Button;
+    private Button option4Button;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_quiz);
+
+        option1Button = (Button) findViewById(R.id.option_1_button);
+        option2Button = (Button) findViewById(R.id.option_2_button);
+        option3Button = (Button) findViewById(R.id.option_3_button);
+        option4Button = (Button) findViewById(R.id.option_4_button);
+
+        option1Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("button clicked", "option1Button clicked");
+            }
+        });
+    }
+}
+```
+
+If we run the app and click the top button, we'll see something similar to the
+following in Android Studio's logcat window:
+
+![TriviaQuiz](images/triviaquiz-3.png)
+
+It would be nice if we could provide some sort of feedback in the app itself
+when a user presses a button.  An easy way to do this by using toasts.  A
+**toast** is a short message that informs the user of something and does not
+require user interaction.  Before we add code for our toast, let's add two
+strings to the string resource file:
+
+```xml
+<resources>
+    <string name="app_name">TriviaQuiz</string>
+    <string name="question_text">What is the capital of Washington?</string>
+    <string name="option_1_button">Seattle</string>
+    <string name="option_2_button">Tacoma</string>
+    <string name="option_3_button">Olympia</string>
+    <string name="option_4_button">Spokane</string>
+    <string name="toast_correct">Correct!</string>
+    <string name="toast_incorrect">Incorrect</string>
+</resources>
+```
+
+To create a toast, we can use the *Toast.makeText()* class method and call
+the *.show()* method on the resulting object.  *Toast.makeText()* takes three
+parameters: a *Context*, an *int* representing a resource ID, and an *int*
+representing the duration to display the message; the *Context* is usually an
+instance of *Activity* and is used find the resource.  The following code
+includes event listeners for each of the four buttons; clicking on one will
+result in a "Correct!" toast and clicking on the others will result in an
+"Incorrect" toast.  
+
+```java
+package com.arthurneuman.triviaquiz;
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.Toast;
+
+public class QuizActivity extends AppCompatActivity {
+    private Button option1Button;
+    private Button option2Button;
+    private Button option3Button;
+    private Button option4Button;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_quiz);
+
+        option1Button = (Button) findViewById(R.id.option_1_button);
+        option2Button = (Button) findViewById(R.id.option_2_button);
+        option3Button = (Button) findViewById(R.id.option_3_button);
+        option4Button = (Button) findViewById(R.id.option_4_button);
+
+        option1Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(QuizActivity.this, R.string.toast_incorrect, Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
+
+        option2Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(QuizActivity.this, R.string.toast_incorrect, Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
+
+        option3Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(QuizActivity.this, R.string.toast_correct, Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
+
+        option4Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(QuizActivity.this, R.string.toast_incorrect, Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
+
+    }
+}
+```
+
+If we run the app and click "Olympia", we should now see a message indicating
+that we've selected the correct answer.
+
+![TriviaQuiz](images/triviaquiz-4.png)
 
 
 ## Material Design
