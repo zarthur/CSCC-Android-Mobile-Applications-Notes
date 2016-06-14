@@ -9,9 +9,8 @@ expand it beyond a single question.  We'd like to have a collection of
 questions we can present to the user.  The first step to doing this is to
 create a new class to represent questions - we'll name it *Question*.  With
 each question we'll associate question text, four possible answers, and a value
-indicating the correct answer.  The question text will be stored as a string
-resource, we we'll store the ID associated with the resource.  Similarly,
-the possible answers will be stored in a string array resource, so we'll store
+indicating the correct answer.  The question text and possible answers will be
+stored as  a string array resource, which we'll look at later, so we'll store
 the ID associated with the string array resource.  Our code for the *Question*
 class looks like this:
 
@@ -20,12 +19,10 @@ package com.arthurneuman.triviaquiz;
 
 public class Question {
     private int mQuestionResId;
-    private int mAnswersResId;
     private int mCorrectAnswer;
 
-    public Question(int questionResId, int answersResId, int correctAnswer) {
+    public Question(int questionResId, int correctAnswer) {
         mQuestionResId = questionResId;
-        mAnswersResId = answersResId;
         mCorrectAnswer = correctAnswer;
     }
 
@@ -148,8 +145,24 @@ The XML for `activity_quiz.xml` should look similar to this:
 ```
 
 We'll have to update the string resource file to include the text for the
-next button.  We can also remove the strings for the question and options we
-used before.  The `strings.xml` resource file should looks like this:
+next button.  We can also additional questions.  We'll store our questions and
+their associated options as string array resources.  Like a string resource, a
+string array must have a name.  To add elements to the string array, we can use
+the *item* tag where the content of the tag is an element in the array.  A
+string array for our the options of our existing question looks like this:
+
+```xml
+<string-array name="question_1">
+    <item>What is the capital of Washington?</item>
+    <item>Seattle</item>
+    <item>Tacoma</item>
+    <item>Olympia</item>
+    <item>Spokane</item>
+</string-array>
+```
+
+Feel free to add as few or as many questions as you'd like. The `strings.xml`
+resource file should looks like this:
 
 ```xml
 <resources>
@@ -157,6 +170,27 @@ used before.  The `strings.xml` resource file should looks like this:
     <string name="toast_correct">Correct!</string>
     <string name="toast_incorrect">Incorrect</string>
     <string name="next_button">Next</string>
+    <string-array name="question_1">
+        <item>What is the capital of Washington?</item>
+        <item>Seattle</item>
+        <item>Tacoma</item>
+        <item>Olympia</item>
+        <item>Spokane</item>
+    </string-array>
+    <string-array name="question_2">
+        <item>What is the largest planet in the solar system?</item>
+        <item>The Sun</item>
+        <item>Earth</item>
+        <item>Jupiter</item>
+        <item>The Moon</item>
+    </string-array>
+    <string-array name="options_3">
+        <item>What is 2+2?</item>
+        <item>4</item>
+        <item>22</item>
+        <item>0</item>
+        <item>1</item>
+    </string-array>
 </resources>
 ```
 
@@ -165,8 +199,13 @@ following.
 
 ![no text](images/no-text.png)
 
-Next, we'll update the controller layer, *QuizActivity*, to display questions
+Next, we can update the controller layer, *QuizActivity*, to display questions
 and handle user interaction.
+
+Let's add a *Question* array to store our questions and initialize it with
+three instances, once for each question. We can store this as a field.
+
+
 
 
 ## Activities
