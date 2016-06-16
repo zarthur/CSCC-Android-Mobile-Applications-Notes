@@ -139,7 +139,7 @@ The XML for `activity_quiz.xml` should look similar to this:
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/next_button"
-        android:id="@+id/button"
+        android:id="@+id/next_button"
         android:layout_gravity="center_horizontal"/>
 </LinearLayout>
 ```
@@ -161,8 +161,9 @@ string array for our the options of our existing question looks like this:
 </string-array>
 ```
 
-Feel free to add as few or as many questions as you'd like. The `strings.xml`
-resource file should looks like this:
+To access a string array using it's name, we'll use `R.array` instead of
+`R.string` in our code. Feel free to add as few or as many questions as you'd
+like. The `strings.xml` resource file should looks like this:
 
 ```xml
 <resources>
@@ -203,9 +204,249 @@ Next, we can update the controller layer, *QuizActivity*, to display questions
 and handle user interaction.
 
 Let's add a *Question* array to store our questions and initialize it with
-three instances, once for each question. We can store this as a field.
+three instances, once for each question. We can store this as a field named
+*mQuestions*.  Addtionally, we can rename our existing fields from
+*option1Button* to *mOption1Button* and so on, add a field for our
+next button, add a field to keep track of our question *TextView*, and add a
+field to keep track of the index of the current question.  At this point,
+`QuizActivity.java` should look like this:
 
+```java
+package com.arthurneuman.triviaquiz;
 
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class QuizActivity extends AppCompatActivity {
+    private Button mOption1Button;
+    private Button mOption2Button;
+    private Button mOption3Button;
+    private Button mOption4Button;
+    private Button mNextButton;
+
+    private TextView mQuestionTextView;
+
+    int mCurrentIndex = 0;
+
+    private Question[] mQuestions = new Question[] {
+            new Question(R.array.question_1, 3),
+            new Question(R.array.question_2, 3),
+            new Question(R.array.question_3, 1)
+    };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_quiz);
+
+        mOption1Button = (Button) findViewById(R.id.option_1_button);
+        mOption2Button = (Button) findViewById(R.id.option_2_button);
+        mOption3Button = (Button) findViewById(R.id.option_3_button);
+        mOption4Button = (Button) findViewById(R.id.option_4_button);
+
+        mOption1Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(QuizActivity.this, R.string.toast_incorrect,
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        mOption2Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(QuizActivity.this, R.string.toast_incorrect,
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        mOption3Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(QuizActivity.this, R.string.toast_correct,
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        mOption4Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(QuizActivity.this, R.string.toast_incorrect,
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+
+    }
+}
+```
+
+Now that we've added new fields and updated the names of existing ones, let's
+start adding code.  We'll need to assign values to *mNextButton* and
+*mQuestionTextView*; we can do this using *findViewById()* like we did for
+*mOption1Button*.  
+
+We can use the *setText()* method available on *Button* and *TextView* objects
+to display the first question's text and options.  Because we'll update the
+*TextView* and each *Button* every time the user advances to the next question,
+let's create a method to update the text:
+
+```java
+private void displayQuestion() {
+    Question currentQuestion = mQuestions[mCurrentIndex];
+    String[] questionText = getResources()
+            .getStringArray(currentQuestion.getQuestionResId());
+    mQuestionTextView.setText(questionText[0]);
+    mOption1Button.setText(questionText[1]);
+    mOption2Button.setText(questionText[2]);
+    mOption3Button.setText(questionText[3]);
+    mOption4Button.setText(questionText[4]);
+}
+```
+
+Here, we retrieve the string array using the *Activity.getResources()* method
+to first get a *Resources* object and then use its *getStringArray()* method
+to get a specific string array using its ID.  
+
+We can now call *displayQuestion()* from the *onCreate()* method to update the
+view layer with text for the current question.  Next, we need to update the
+listeners for each of the option buttons and add a listener for the next button.
+
+For each option button, we'll want the listener to check if the the clicked
+button corresponds to the correct answer and make the appropriate toast.  Let's
+add a function that takes an integer parameter representing the clicked button
+and checks the current question for the correct answer, and makes a toast.
+
+```java
+private void checkAnswer(int buttonClicked) {
+    Question currentQuestion = mQuestions[mCurrentIndex];
+    if (currentQuestion.getCorrectAnswer() == buttonClicked) {
+        Toast.makeText(QuizActivity.this, R.string.toast_correct,
+                Toast.LENGTH_SHORT).show();
+    }
+    else {
+        Toast.makeText(QuizActivity.this, R.string.toast_incorrect,
+                Toast.LENGTH_SHORT).show();
+    }
+}
+```
+
+We can now call *checkAnswer()* from each of the option buttons' listeners.  
+
+With updated listeners and a listener for the next button, our code should look
+like this:
+
+```java
+package com.arthurneuman.triviaquiz;
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class QuizActivity extends AppCompatActivity {
+    private Button mOption1Button;
+    private Button mOption2Button;
+    private Button mOption3Button;
+    private Button mOption4Button;
+    private Button mNextButton;
+
+    private TextView mQuestionTextView;
+
+    int mCurrentIndex = 0;
+
+    private Question[] mQuestions = new Question[] {
+            new Question(R.array.question_1, 3),
+            new Question(R.array.question_2, 3),
+            new Question(R.array.question_3, 1)
+    };
+
+    private void displayQuestion() {
+        Question currentQuestion = mQuestions[mCurrentIndex];
+        String[] questionText = getResources()
+                .getStringArray(currentQuestion.getQuestionResId());
+        mQuestionTextView.setText(questionText[0]);
+        mOption1Button.setText(questionText[1]);
+        mOption2Button.setText(questionText[2]);
+        mOption3Button.setText(questionText[3]);
+        mOption4Button.setText(questionText[4]);
+    }
+
+    private void checkAnswer(int buttonClicked) {
+        Question currentQuestion = mQuestions[mCurrentIndex];
+        if (currentQuestion.getCorrectAnswer() == buttonClicked) {
+            Toast.makeText(QuizActivity.this, R.string.toast_correct,
+                    Toast.LENGTH_SHORT).show();
+        }
+        else {
+            Toast.makeText(QuizActivity.this, R.string.toast_incorrect,
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_quiz);
+
+        mOption1Button = (Button) findViewById(R.id.option_1_button);
+        mOption2Button = (Button) findViewById(R.id.option_2_button);
+        mOption3Button = (Button) findViewById(R.id.option_3_button);
+        mOption4Button = (Button) findViewById(R.id.option_4_button);
+        mNextButton = (Button) findViewById(R.id.next_button);
+        mQuestionTextView = (TextView) findViewById(R.id.question_text_view);
+
+        displayQuestion();
+
+        mOption1Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkAnswer(1);
+            }
+        });
+
+        mOption2Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkAnswer(2);
+            }
+        });
+
+        mOption3Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkAnswer(3);
+            }
+        });
+
+        mOption4Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkAnswer(4);
+            }
+        });
+
+        mNextButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mCurrentIndex = (mCurrentIndex + 1) % mQuestions.length;
+                displayQuestion();
+            }
+        });
+
+    }
+}
+```
+
+We can see how changes to the view layer (button clicks) require interaction
+with the model layer and how the model layer is used to populate text in the
+view layer.  Communication between these two layers is handled by the
+controller layer, *QuizActivity*.
 
 
 ## Activities
