@@ -486,9 +486,35 @@ see something similar to the following:
 
 ![wrong](images/incorrect.png)
 
+## The Activity Lifecycle
+Previously, we said an **activity** represents something a user can do.  Each
+*Activity* object has a lifecycle and can transition between three states:
+running, paused, and stopped.  When an app is running, it is visible and in the
+foreground; when an app is paused, it is visible; when an app is stopped, it is
+not visible. An activity can also stop existing but once it enters this state,
+it cannot return to the other three without creating a new *Activity* instance.
+For each transition, there is a method that notifies the *Activity* instance of
+the state change.  
 
-## Activities
-### Activity Lifecycle
+| Original State | New State    | Activity Method |
+|:---------------|:-------------|:----------------|
+| Running        | Paused       | onPause()       |
+| Paused         | Running      | OnResume()      |
+| Paused         | Stopped      | onStop()        |
+| Stopped        | Paused       | onStart()       |
+| Stopped        | Non-existent | onDestroy()     |
+| Non-existent   | Stopped      | onCreate()      |
+
+We've already worked with one of these methods, *onCreate()* to inflate
+our layout and set listeners on our widgets.
+
+Activity state should not be confused with process state which accounts for
+apps running in the background.  
+
 ### Demonstration of the Activity Lifecycle
+We can how our app transitions through its various states while we interact
+with it.  To do this, we will make use of the *android.util.Log* class to
+create log messages.
+
 ### Rotation
 ### Saving Data
