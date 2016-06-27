@@ -90,9 +90,32 @@ We'll want to programmatically change the text of these objects, so we can
 clear the values of the *text* property for each of them.  We'd also like to
 give a more descriptive ID to the *TextView* object; change it to something like
 `question_text_view`.  We'll also add a new button that will allow us to move
-to the next question.  Place it below the existing buttons and set its *id*
-property to `next_button` and it's *text* property to `@string/next_button`; we
-won't change the text of this button so it's okay for it to be hard-coded.  
+to the next question.  Before we add the new button, let's clean up the
+interface a little bit.  Let's add a *GridLayout* to the app by dragging and
+dropping it below the exiting *TextView*.  Once it's placed, set the following
+properties:
+
+| Property      | Value        |
+|:--------------|:-------------|
+| layout:width  | wrap_content |
+| layout:height | wrap_content |
+| columnCount   | 2            |
+
+Next, in the Components Window, drag and drop each of the buttons into the
+newly created *GridLayout*.  Update the *layout:width* property to
+`wrap_content` for each button.  
+
+Now, we can add a next button. Place it below the existing buttons in the
+*GridLayout* and set the following properties:
+
+| Property          | Value               |
+|:------------------|:--------------------|
+| layout:width      | wrap_content        |
+| layout:columnSpan | 2                   |
+| id                | next_button         |
+| text              | @string/next_button |
+
+We won't change the text of this button so it's okay for it to be hard-coded.  
 
 The XML for `activity_quiz.xml` should look similar to this:
 
@@ -111,36 +134,46 @@ The XML for `activity_quiz.xml` should look similar to this:
         android:layout_gravity="center_horizontal"
         android:padding="24dp" />
 
-    <Button
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/option_1_button"
-        android:layout_gravity="center_horizontal" />
-
-    <Button
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/option_2_button"
-        android:layout_gravity="center_horizontal" />
-
-    <Button
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/option_3_button"
-        android:layout_gravity="center_horizontal" />
-
-    <Button
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/option_4_button"
-        android:layout_gravity="center_horizontal" />
-
-    <Button
+    <GridLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/next_button"
-        android:id="@+id/next_button"
-        android:layout_gravity="center_horizontal"/>
+        android:layout_gravity="center_horizontal"
+        android:columnCount="2">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/option_1_button"
+            android:layout_gravity="center_horizontal" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/option_2_button"
+            android:layout_gravity="center_horizontal" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/option_3_button"
+            android:layout_gravity="center_horizontal" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/option_4_button"
+            android:layout_gravity="center_horizontal" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/next_button"
+            android:id="@+id/next_button"
+            android:layout_gravity="center_horizontal"
+            android:layout_columnSpan="2"
+            />
+    </GridLayout>
+
 </LinearLayout>
 ```
 
@@ -447,6 +480,11 @@ We can see how changes to the view layer (button clicks) require interaction
 with the model layer and how the model layer is used to populate text in the
 view layer.  Communication between these two layers is handled by the
 controller layer, *QuizActivity*.
+
+When we start the app and answer the first question incorrectly, we should
+see something similar to the following:
+
+![wrong](images/incorrect.png)
 
 
 ## Activities
