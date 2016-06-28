@@ -516,5 +516,217 @@ We can how our app transitions through its various states while we interact
 with it.  To do this, we will make use of the *android.util.Log* class to
 create log messages.
 
-### Rotation
+The *Log* class has several methods for logging.  For now, we'll use the
+*Log.d()* method which has the following method header:
+
+`public static int d(String tag, String msg)`
+
+Here, *d* stands for debug which is log message level.  Other levels include
+info, warn, and error and can be used to log messages of different severity/
+purpose.  The method takes two parameters: *tag* which represents the source
+of the message and *msg* which is the log message itself.
+
+For the tag, we can use the name of the class from which the message is being
+generate.  We can add the following to the *QuizActivity* class declaration and
+use *TAG* whenever we need to log a message:
+
+```java
+private static final String TAG = QuizActivity.class.getSimpleName();
+```
+
+This sets the value of *TAG* to the the name of the *QuizActivity* class.  One
+advantage to using this method over using a string literal is that if we rename
+the class with Android Studio, *TAG* will update automatically.  
+*getSimpleName()* returns only the class name and not any package information;
+this is useful as there is a limit to the tag length.  
+
+To log a message and see when *QuizActivity.onCreate()* is called, we can add
+the following to the overridden *onCreate()* method:
+
+```java
+Log.d(TAG, "onCrate(Bundle) called");
+```
+
+after the call to *super()*.
+
+The code in `QuizActivity.java` should now look similar to the following:
+
+```java
+package com.arthurneuman.triviaquiz;
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class QuizActivity extends AppCompatActivity {
+    private static final String TAG = QuizActivity.class.getSimpleName();
+    private Button mOption1Button;
+    private Button mOption2Button;
+    private Button mOption3Button;
+    private Button mOption4Button;
+    private Button mNextButton;
+
+    private TextView mQuestionTextView;
+
+    int mCurrentIndex = 0;
+
+    private Question[] mQuestions = new Question[] {
+            new Question(R.array.question_1, 3),
+            new Question(R.array.question_2, 3),
+            new Question(R.array.question_3, 1)
+    };
+
+    private void displayQuestion() {
+        Question currentQuestion = mQuestions[mCurrentIndex];
+        String[] questionText = getResources()
+                .getStringArray(currentQuestion.getQuestionResId());
+        mQuestionTextView.setText(questionText[0]);
+        mOption1Button.setText(questionText[1]);
+        mOption2Button.setText(questionText[2]);
+        mOption3Button.setText(questionText[3]);
+        mOption4Button.setText(questionText[4]);
+    }
+
+    private void checkAnswer(int buttonClicked) {
+        Question currentQuestion = mQuestions[mCurrentIndex];
+        if (currentQuestion.getCorrectAnswer() == buttonClicked) {
+            Toast.makeText(QuizActivity.this, R.string.toast_correct,
+                    Toast.LENGTH_SHORT).show();
+        }
+        else {
+            Toast.makeText(QuizActivity.this, R.string.toast_incorrect,
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate(Bundle) called");
+        setContentView(R.layout.activity_quiz);
+
+        mOption1Button = (Button) findViewById(R.id.option_1_button);
+        mOption2Button = (Button) findViewById(R.id.option_2_button);
+        mOption3Button = (Button) findViewById(R.id.option_3_button);
+        mOption4Button = (Button) findViewById(R.id.option_4_button);
+        mNextButton = (Button) findViewById(R.id.next_button);
+        mQuestionTextView = (TextView) findViewById(R.id.question_text_view);
+
+        displayQuestion();
+
+        mOption1Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkAnswer(1);
+            }
+        });
+
+        mOption2Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkAnswer(2);
+            }
+        });
+
+        mOption3Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkAnswer(3);
+            }
+        });
+
+        mOption4Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkAnswer(4);
+            }
+        });
+
+        mNextButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mCurrentIndex = (mCurrentIndex + 1) % mQuestions.length;
+                displayQuestion();
+            }
+        });
+
+    }
+}
+```
+
+When we run the app, we should see a line similar to the following in the
+Android Monitor/logcat window:
+
+```
+06-28 18:01:46.288 2580-2580/com.arthurneuman.triviaquiz D/QuizActivity: onCreate(Bundle) called
+```
+
+We can add logging statements to the other methods associated with the activity
+lifecycle.  
+
+```java
+@Override
+public void onStart() {
+    super.onStart();
+    Log.d(TAG, "onStart() called");
+}
+
+@Override
+public void onPause() {
+    super.onPause();
+    Log.d(TAG, "onPause() called");
+}
+
+@Override
+public void onResume() {
+    super.onResume();
+    Log.d(TAG, "onResume() called");
+}
+
+@Override
+public void onStop() {
+    super.onStop();
+    Log.d(TAG, "onStop() called");
+}
+
+@Override
+public void onDestroy() {
+    super.onDestroy();
+    Log.d(TAG, "onDestroy() called");
+}
+```
+
+It's important to call the overridden method using *super* to ensure the
+*Activity* behaves properly.  
+
+If we restart the app, leave the app, and return to it, we can see
+*QuizActivity* transition through the various states of the activity lifecycle
+by following the log messages.
+
+What happens when we rotate the Android device while our app is running?  
+If you are using the emulator, you can simulate a rotation using the rotate
+buttons, which appear inside the red circle in the image below.
+
+![rotate](images/rotate.png)
+
+Examining the log messages, we can see that *QuizActivity* is paused, stopped,
+and destroyed then created, started, and resumed.  Further evidence of this
+can be seen if we advance to the second question and then rotate the device.
+After rotation, the app presents the first question.  
+
+Rotation the device changes the device configuration.  The *device
+configuration* is a set of properties including screen orientation, screen
+size, screen density, and language that describe the current state of the
+device.  Often, we'll have different resources (such as layouts for widgets)
+for different device configurations.  When the device configuration changes,
+Android recreates the activity so that a different resource can be loaded.  
+
+In *QuizActivity*, the *mCurrentIndex* instance variable stores the index
+of the current question.  We'd like to be able to maintain the value
+of *mCurrentIndex* through device rotations.  
+
 ### Saving Data
