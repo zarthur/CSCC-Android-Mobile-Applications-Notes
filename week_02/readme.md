@@ -564,6 +564,7 @@ import android.widget.Toast;
 
 public class QuizActivity extends AppCompatActivity {
     private static final String TAG = QuizActivity.class.getSimpleName();
+
     private Button mOption1Button;
     private Button mOption2Button;
     private Button mOption3Button;
@@ -730,3 +731,211 @@ of the current question.  We'd like to be able to maintain the value
 of *mCurrentIndex* through device rotations.  
 
 ### Saving Data
+If we look at the overridden *onCreate()* method in *QuizActivity*, we can
+see that it takes a single parameter: a *Bundle*.  A **bundle** is a data
+structure that maps string keys to values of certain types.  We can add data to  
+a bundle to store our activities state when it's stopped or paused and use
+that data to restore our activity if it has to be recreated.  Android
+handles creating the bundle and keeping track of the appropriate activity as
+long as the application's process is running.  
+
+To use a bundle to store the value of *mCurrentIndex*, let's first define
+a static field that specifies the key name in the bundle.  We can add the
+following to our *QuizActivity* class declaration:
+
+```java
+private static final String KEY_INDEX = "index";
+```
+
+In addition to the methods we listed above, there is another method that is
+called during activity state changes:
+
+```java
+public void onSaveInstanceState(Bundle savedInstanceState)
+```
+
+We can override this method to add data to the bundle.  Add the following
+to *QuizActivity*:
+
+```java
+@Override
+public void onSaveInstanceState(Bundle savedInstanceState) {
+    super.onSaveInstanceState(savedInstanceState);
+    Log.d(TAG, "onSaveInstanceState() called");
+    savedInstanceState.putInt(KEY_INDEX, mCurrentIndex);
+}
+```
+
+Now, when the activity is paused or stopped, the value of *mCurrentIndex* will
+be stored in the bundle associated with the activity.
+
+To restore the value of *mCurrentIndex*, we can modify *onCreate()* to include
+the following after the call to *Log.d()*:
+
+```java
+if (savedInstanceState != null) {
+    mCurrentIndex = savedInstanceState.getInt(KEY_INDEX, 0);
+}
+```
+
+It's important to check that *savedInstanceState* is not null; if the
+activity is being created for the first time after the application's process
+was stopped, *savedInstanceState* will be `null` and calling *getInt()* will
+throw a *NullPointerException*.  The second argument to *getInt()* is the
+default value to use if the key is not found in the bundle.  
+
+If we restart the application, advance to the second question, and rotate the
+device, we should now still see the second question.
+
+The complete code for `QuizActivity.java` appears below.
+
+```java
+package com.arthurneuman.triviaquiz;
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class QuizActivity extends AppCompatActivity {
+    private static final String TAG = QuizActivity.class.getSimpleName();
+    private static final String KEY_INDEX = "index";
+
+    private Button mOption1Button;
+    private Button mOption2Button;
+    private Button mOption3Button;
+    private Button mOption4Button;
+    private Button mNextButton;
+
+    private TextView mQuestionTextView;
+
+    int mCurrentIndex = 0;
+
+    private Question[] mQuestions = new Question[] {
+            new Question(R.array.question_1, 3),
+            new Question(R.array.question_2, 3),
+            new Question(R.array.question_3, 1)
+    };
+
+    private void displayQuestion() {
+        Question currentQuestion = mQuestions[mCurrentIndex];
+        String[] questionText = getResources()
+                .getStringArray(currentQuestion.getQuestionResId());
+        mQuestionTextView.setText(questionText[0]);
+        mOption1Button.setText(questionText[1]);
+        mOption2Button.setText(questionText[2]);
+        mOption3Button.setText(questionText[3]);
+        mOption4Button.setText(questionText[4]);
+    }
+
+    private void checkAnswer(int buttonClicked) {
+        Question currentQuestion = mQuestions[mCurrentIndex];
+        if (currentQuestion.getCorrectAnswer() == buttonClicked) {
+            Toast.makeText(QuizActivity.this, R.string.toast_correct,
+                    Toast.LENGTH_SHORT).show();
+        }
+        else {
+            Toast.makeText(QuizActivity.this, R.string.toast_incorrect,
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate(Bundle) called");
+
+        if (savedInstanceState != null) {
+            mCurrentIndex = savedInstanceState.getInt(KEY_INDEX, 0);
+        }
+
+        setContentView(R.layout.activity_quiz);
+
+        mOption1Button = (Button) findViewById(R.id.option_1_button);
+        mOption2Button = (Button) findViewById(R.id.option_2_button);
+        mOption3Button = (Button) findViewById(R.id.option_3_button);
+        mOption4Button = (Button) findViewById(R.id.option_4_button);
+        mNextButton = (Button) findViewById(R.id.next_button);
+        mQuestionTextView = (TextView) findViewById(R.id.question_text_view);
+
+        displayQuestion();
+
+        mOption1Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkAnswer(1);
+            }
+        });
+
+        mOption2Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkAnswer(2);
+            }
+        });
+
+        mOption3Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkAnswer(3);
+            }
+        });
+
+        mOption4Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkAnswer(4);
+            }
+        });
+
+        mNextButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mCurrentIndex = (mCurrentIndex + 1) % mQuestions.length;
+                displayQuestion();
+            }
+        });
+
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        Log.d(TAG, "onSaveInstanceState() called");
+        savedInstanceState.putInt(KEY_INDEX, mCurrentIndex);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        Log.d(TAG, "onStart() called");
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        Log.d(TAG, "onPause() called");
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume() called");
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop() called");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy() called");
+    }
+}
+```
