@@ -130,6 +130,8 @@ the **Run** menu.  Let's add a breakpoint exception for instances of
 Exception Breakpoints**, start typing `NullPointerException`, select it from
 the list of suggestions, and click **OK**.  
 
+![exception breakpoint](images/ebreakpoint.png)
+
 We can comment out the following line in the *onCreate()* method to cause a
 *NullPointerException* to be thrown:
 
@@ -143,5 +145,51 @@ Now if we debug the app, we should reach a breakpoint at the call to
 previously commented line to fix this.
 
 ## Android Lint
+So far the debugging that we've done is no different from the debugging you
+might do for any Java application - and most of the time this is the kind of
+debugging we'll need to do.  However, there are some bugs that can occur with
+Android-specific parts of an application (such as resources) for which the
+normal Java debugger might not be helpful.  For these bugs, Android Lint can
+help detect these kinds of errors.  
+
+For example, change the following code in *QuizActivity.onCreate()*:
+
+```java
+mNextButton = (Button) findViewById(R.id.next_button);
+```
+
+to this:
+
+```java
+mNextButton = (Button) findViewById(R.id.question_text_view);
+```
+
+We can view errors found by Android Lint by selecting **Analyze** and **Inspect
+Code** from the menu bar.  Though we have the option to inspect the entire app
+or the current module, let's inspect the current file.  In addition to some
+Java suggestions, we also see Android Lint messages.  One of the messages
+indicates that there's a problem with our attempt to cast a *TextView* to a
+*Button*.  If we try to run the app, it will crash due to an
+*ClassCastException* - the very thing Android Lint warned us about.
+
+![lint](images/lint.png)
+
+Additionally, notice that the line causing the problem is also underlined in
+red in the editor view. We can use Android Lint to help address issues before
+they cause our app to crash.
+
+Be sure to revert your code to assign the correct view to *mNextButton*.
 
 ## Issues with the *R* class
+Occasionally, we'll encounter errors related to resources and the *R* class
+used to access them that seem to appear suddenly for no reason. Diagnosing
+these error can sometimes be frustrating.  Here are some things to try.
+
+1. Check the XML in the resource files - make sure it's valid and free of
+   errors.
+2. Clean the project by selecting **Build** and **Clean Project** from the
+   menu bar.  This causes Android Studio to rebuild the entire project.
+3. Sync Gradle by selecting **Tools**, **Android**, and **Sync Project with
+   Gradle Files**.  Changes to Gradle files might cause problems with until
+   the project is synced and rebuilt.
+4. Run Android Lint.  Android Lint can often uncover unexpected errors.
