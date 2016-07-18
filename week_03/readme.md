@@ -1,9 +1,10 @@
-# Week 3 - Debugging
+# Week 3 - Debugging and Additional Activities
 
 ## Corresponding Text
-*Android Programming*, pp. 75-85
+*Android Programming*, pp. 75-109
 
-## Logging
+## Debugging
+### Logging
 As we develop applications, we're likely to run into unexpected behavior
 including thrown exceptions and errors. When this happens, we can debug our
 application.  At the most basic level, we can log messages about our
@@ -77,7 +78,7 @@ can be helpful in determining what is causing unexpected behavior.  We can
 uncomment the code to increment *mCurrentIndex* to fix the bug and remove the
 code to create a log message.
 
-## Breakpoints
+### Breakpoints
 Sometimes it's more useful to know the state of several objects or to
 execute code line-by-line so we can examine the state of the app at each step.  
 Rather than creating a lot of log messages, we can make use of the debugger by
@@ -144,7 +145,7 @@ Now if we debug the app, we should reach a breakpoint at the call to
 *mNextButton* and we cannot call the method on *null*.  Uncomment the
 previously commented line to fix this.
 
-## Android Lint
+### Android Lint
 So far the debugging that we've done is no different from the debugging you
 might do for any Java application - and most of the time this is the kind of
 debugging we'll need to do.  However, there are some bugs that can occur with
@@ -180,7 +181,7 @@ they cause our app to crash.
 
 Be sure to revert your code to assign the correct view to *mNextButton*.
 
-## Issues with the *R* class
+### Issues with the *R* class
 Occasionally, we'll encounter errors related to resources and the *R* class
 used to access them that seem to appear suddenly for no reason. Diagnosing
 these error can sometimes be frustrating.  Here are some things to try.
@@ -193,3 +194,54 @@ these error can sometimes be frustrating.  Here are some things to try.
    Gradle Files**.  Changes to Gradle files might cause problems with until
    the project is synced and rebuilt.
 4. Run Android Lint.  Android Lint can often uncover unexpected errors.
+
+
+## Adding a Second Activity
+So far our app has one activity, *QuizActivity* that displays a question, four
+possible answers, a next button, and a toast indicating if the answer we select
+is correct or not.  What if we want to display something else or ask the user
+for other information?  While we could add something to our existing activity,
+it might make sense to make another activity and start it from *QuizActivity*.  
+As another example, suppose we have an app of Todo items where the main
+activity is a list of all tasks.  If we wanted to display detailed task
+information, we could create a new activity.  
+
+As we go through the process of creating and using a second activity, be sure
+to use any of debugging tools we discussed if you run into problems.  
+
+### Creating a Second Activity
+When we create a new activity, we typically create two new files: a Java class
+file and an XML layout file.  Additionally, we have to update the Android
+manifest file with information about our new activity.  The manifest file
+provides information about our app including the Java package, the components
+of our app, permissions our app requires, and the minimum Android API version.  
+Misconfigured class, layout, or manifest files will cause our app to not run so
+rather than create/update these files by hand, we can rely on Android Studio.
+
+To create a new activity, right-click on your Java package in the *Project*
+view in Android Studio and select **New**, **Activity**, and **Empty Activity**.
+
+We'll create an activity to provide the user with a hint. Configure the new
+activity with values similar to those pictured.
+
+![new activity](images/new_activity.png)
+
+This will create a new Java class file and an XML layout file as well as
+update the Android manifest file.  Our new activity, will prompt the user to
+confirm that they want a a hint so we'll add a *LinearLayout* containing a
+*Plain TextView* and a *Button*.  As a first step, replace the automatically
+generated *RelativeLayout* in the layout file with a *LinearLayout*.  The
+easiest way to do this is by modifying the XML and changing `RelativeLayout`.
+In *Design* view, be sure the following properties are set on the layout:
+
+| Property    | Value    |
+|:------------|:---------|
+| gravity     | [center] |
+| orientation | vertical |
+
+
+```
+android:orientation="vertical"
+```
+
+In the *Design* view, drag and drop a *Plain TextView* and a *Button*.  
