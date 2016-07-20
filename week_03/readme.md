@@ -218,11 +218,19 @@ of our app, permissions our app requires, and the minimum Android API version.
 Misconfigured class, layout, or manifest files will cause our app to not run so
 rather than create/update these files by hand, we can rely on Android Studio.
 
-To create a new activity, right-click on your Java package in the *Project*
-view in Android Studio and select **New**, **Activity**, and **Empty Activity**.
+We'll create a new activity that will be used to allow the user to see a hint.
+Before we create a new activity, let's add strings to our string resource
+file:
 
-We'll create an activity to provide the user with a hint. Configure the new
-activity with values similar to those pictured.
+```xml
+<string name="hint_text">Are you sure you want a hint?</string>
+<string name="hint_show_button">Hint</string>
+<string name="hint_confirm_button">Yes</string>
+```
+
+To create a new activity, right-click on your Java package in the *Project*
+view in Android Studio and select **New**, **Activity**, and **Empty
+Activity**. Configure the new activity with values similar to those pictured.
 
 ![new activity](images/new_activity.png)
 
@@ -244,4 +252,163 @@ In *Design* view, be sure the following properties are set on the layout:
 android:orientation="vertical"
 ```
 
-In the *Design* view, drag and drop a *Plain TextView* and a *Button*.  
+In the *Design* view, drag and drop two *Plain TextView* widgets and a *Button*
+below the *TextView* widgets. Set the following properties:
+
+| Object            | Property | Value                       |
+|:------------------|:---------|:----------------------------|
+| Top *TextView*    | id       | hint_confirm_textview       |
+| Top *TextView*    | text     | @string/hint_confirm_text   |
+| Top *TextView*    | padding  | 24dp                        |
+| Middle *TextView* | id       | hint_textview               |
+| Middle *TextView* | text     | *<empty>*                   |
+| Middle *TextView* | padding  | 24dp                        |
+| *Button*          | id       | hint_confirm_button         |
+| *Button*          | text     | @string/hint_confirm_button |
+
+The XML for the new layout should be similar to the following:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.arthurneuman.triviaquiz.HintActivity"
+    android:orientation="vertical"
+    android:gravity="center">
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/hint_confirm_text"
+        android:id="@+id/hint_confirm_textview"
+        android:layout_gravity="center_horizontal"
+        android:padding="24dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/hint_textview"
+        android:layout_gravity="center_horizontal"
+        android:padding="24dp"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/hint_confirm_button"
+        android:id="@+id/hint_confirm_button"
+        android:layout_gravity="center_horizontal"
+        />
+</LinearLayout>
+
+```
+
+While we're working on layouts, let's update the `activity_quiz.xml` layout
+to place a button next to the **Next** button.  First, change the following
+properties of the **Next** button:
+
+| Property   | Value |
+|:-----------|:------|
+| column     | 2     |
+| columnSpan | 1     |
+
+Next, drag a *Button* next to the **Next** button and set the following
+properties:
+
+| Property       | Value                    |
+|:---------------|:-------------------------|
+| column         | 1                        |
+| columnSpan     | 1                        |
+| layout:gravity | [center horizontal]      |
+| layout:row     | 2                        |
+| id             | hint_show_button         |
+| text           | @string/hint_show_button |
+
+The XML for `activity_quiz.xml` should now be similar to
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical" >
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/question_text_view"
+        android:layout_gravity="center_horizontal"
+        android:padding="24dp" />
+
+    <GridLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:columnCount="3">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/option_1_button"
+            android:layout_gravity="center_horizontal"
+            android:layout_row="0"
+            android:layout_column="1"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/option_2_button"
+            android:layout_gravity="center_horizontal"
+            android:layout_row="0"
+            android:layout_column="2"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/option_3_button"
+            android:layout_gravity="center_horizontal"
+            android:layout_row="1"
+            android:layout_column="1"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/option_4_button"
+            android:layout_gravity="center_horizontal"
+            android:layout_row="1"
+            android:layout_column="2"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/hint_show_button"
+            android:id="@+id/hint_show_button"
+            android:layout_row="2"
+            android:layout_column="1"
+            android:layout_columnSpan="1"
+            android:layout_gravity="center_horizontal"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/next_button"
+            android:id="@+id/next_button"
+            android:layout_gravity="center_horizontal"
+            android:layout_columnSpan="1"
+            android:layout_row="2"
+            android:layout_column="2"/>
+
+    </GridLayout>
+
+</LinearLayout>
+```
+The layouts should look similar to the following:
+
+![layouts](images/layouts.png)
+
+Now that we've created the layout, we can add functionality by adding code
+to the Java class files.  
