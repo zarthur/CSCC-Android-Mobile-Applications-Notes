@@ -412,3 +412,69 @@ The layouts should look similar to the following:
 
 Now that we've created the layout, we can add functionality by adding code
 to the Java class files.  
+
+To start an activity from within another activity, we'll make use of the
+ActivityManager.  The **ActivityManager** is part of the Android OS that, as
+its name suggests, manages activities - it can be used to get information about
+running activities as well to start new activities.  We can instruct the
+ActivityManager to create a new activity by calling *startActivity()* from
+within an existing activity.  The *startActivity()* method is a member of
+the abstract class *Context* which provides information about an application
+and its environment; *Activity* is a subclass of *Context* so *QuizActivity*
+has a *startActivity()* method.
+
+The *startActivity()* method is overloaded with the following signatures:
+
+```java
+startActivity(Intent)
+startActivity(Intent, Bundle)
+```
+
+For now, we'll work with the method that takes an *Intent* parameter.  An
+**Intent** is an object used to communicate with the OS.  We'll use an *Intent*
+to pass information to the new activity we want the OS to create.  The *Intent*
+class has several constructors, we'll make use of the constructor that takes
+a *Context* and a *Class* as parameters; the *Class* parameter specifies the
+*Activity* class to be started and the *Context* parameter specifies which
+application the class is associated with.
+
+To start the *HintActivity* from *QuizActivity*, we could use the following:
+
+```java
+Intent intent = new Intent(this, HintActivity.class);
+startActivity(intent);
+```
+
+Before we add the code to create the new activity to *QuizActivity*, let's
+add a field for the **hint_show_button** to the *QuizActivity* class:
+
+```java
+private Button mShowHintButton;
+```
+
+Let's also assign a value to *mShowHintButton* in the *QuizActivity.onCreate()*
+method:
+
+```java
+mShowHintButton = (Button) findViewById(R.id.hint_show_button);
+```
+
+Now, we can assign a listener to the button in *QuizActivity.onCreate()*:
+
+```java
+mShowHintButton.setOnClickListener(new View.OnClickListener() {
+    @Override
+    public void onClick(View v) {
+        Intent intent = new Intent(QuizActivity.this, HintActivity.class);
+        startActivity(intent);
+    }
+});
+```
+
+If we run the app now, we can click the **Hint** button and we'll see the
+hint activity.  We haven't added any functionality to *HintActivity* so we
+can't do much yet.  We'd like to be able to display the correct answer if
+the user wants a hint.  To do that, we'll have to communicate that as part
+of the *Intent* used to create the hint activity.  To add extra information,
+we can make use of *Intent* extra's or we can use a *Bundle*.  We'll use
+a *Bundle* but you can see how to use extra's in the book.
