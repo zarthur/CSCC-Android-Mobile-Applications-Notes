@@ -448,6 +448,7 @@ startActivity(intent);
 Before we add the code to create the new activity to *QuizActivity*, let's
 add a field for the **hint_show_button** to the *QuizActivity* class:
 
+**QuizActivity.java**
 ```java
 private Button mShowHintButton;
 ```
@@ -461,6 +462,7 @@ mShowHintButton = (Button) findViewById(R.id.hint_show_button);
 
 Now, we can assign a listener to the button in *QuizActivity.onCreate()*:
 
+**QuizActivity.java**
 ```java
 mShowHintButton.setOnClickListener(new View.OnClickListener() {
     @Override
@@ -476,5 +478,301 @@ hint activity.  We haven't added any functionality to *HintActivity* so we
 can't do much yet.  We'd like to be able to display the correct answer if
 the user wants a hint.  To do that, we'll have to communicate that as part
 of the *Intent* used to create the hint activity.  To add extra information,
-we can make use of *Intent* extra's or we can use a *Bundle*.  We'll use
-a *Bundle* but you can see how to use extra's in the book.
+we can make use of *Intent* extras.  Using an *Intent* extra is similar to
+using a bundle: we can use the *putExtra()* method to add a name/value pair
+as extra information to the intent.  *putExtra()* is overridden to support many
+data types but we'll make use of method that allows us to store a string.  
+
+Rather than adding this code to *QuizActivity*, it makes more sense to add
+it to *HintActivity* since the intent is being used to start the Hint activity
+and the intent extra will be used by *HintActivity*.  We'll create a static
+method in *HintActivity* that takes two arguments, a *Context* and a *String*,
+and returns a new *Intent* with an extra.  In addition to the new static method,
+we'll also create a static field to store the extra's name.
+
+**HintActivity.java**
+```java
+private static final String ANSWER = "com.arthurneuman.triviaquiz.answer";
+
+public static Intent newIntent(Context context, String answer) {
+    Intent intent = new Intent(context, HintActivity.class);
+    intent.putExtra(ANSWER, answer);
+    return intent;
+}
+```
+
+Now, we can update *mShowHintButton*'s OnClickListener in *QuizActivity* to
+use *HintActivity.newIntent()*:
+
+**QuizActivity.java**
+```java
+mShowHintButton.setOnClickListener(new View.OnClickListener() {
+    @Override
+    public void onClick(View v) {
+        // get the correct answer
+        Question currentQuestion = mQuestions[mCurrentIndex];
+        String[] answers = getResources().getStringArray(
+                currentQuestion.getQuestionResId());
+        String answer = answers[currentQuestion.getCorrectAnswer()];
+
+        // start HintActivity with correct answer
+        Intent intent = HintActivity.newIntent(QuizActivity.this, answer);
+        startActivity(intent);
+    }
+});
+```
+
+This allows us to share information between activities: when we start
+*HintActivity*, information about the correct answer is sent from
+*QuizActivity*. To use this information in *HintActivity*, we can call the
+*Activity.getIntent()* method to access the intent that started the activity.  
+Let's add a field to *HintActivity* to store the answer and add code to
+*onCreate()* to extract the answer from the intent.
+
+**HintActivity.java**
+```java
+public class HintActivity extends AppCompatActivity {
+
+    private static final String ANSWER = "com.arthurneuman.triviaquiz.answer";
+    private String mCorrectAnswer;
+
+    public static Intent newIntent(Context context, String answer) {
+        Intent intent = new Intent(context, HintActivity.class);
+        intent.putExtra(ANSWER, answer);
+        return intent;
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_hint);
+        mCorrectAnswer = getIntent().getStringExtra(ANSWER);
+    }
+
+}
+```
+
+Finally, we can add code to display the answer when the *hint_show_button* is
+pressed.
+
+**HintActivity.java**
+```java
+public class HintActivity extends AppCompatActivity {
+
+    ...
+    private String mCorrectAnswer;
+    private TextView mHintTextView;
+    private Button mConfirmButton;
+    ...
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_hint);
+        mCorrectAnswer = getIntent().getStringExtra(ANSWER);
+
+        mHintTextView = (TextView) findViewById(R.id.hint_textview);
+        mConfirmButton = (Button) findViewById(R.id.hint_confirm_button);
+
+        mConfirmButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mHintTextView.setText(mCorrectAnswer);
+            }
+        });
+    }
+
+}
+```
+
+Not that part of the code for *HintActivity* has been excluded from the above
+code and is represented by the ellipses (...).  
+
+If we run the app, we can press the **Hint** button to start the hint activity.
+In the hint activity, we can press the **Yes** button to see the correct
+answer.  We can use Android's back button to return to the previous activity.
+
+The code for our two activities should look similar to this:
+
+**QuizActivity.java**
+```java
+package com.arthurneuman.triviaquiz;
+
+import android.content.Intent;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class QuizActivity extends AppCompatActivity {
+    private static final String TAG = QuizActivity.class.getSimpleName();
+    private static final String KEY_INDEX = "index";
+
+    private Button mOption1Button;
+    private Button mOption2Button;
+    private Button mOption3Button;
+    private Button mOption4Button;
+    private Button mNextButton;
+    private Button mShowHintButton;
+
+    private TextView mQuestionTextView;
+
+    int mCurrentIndex = 0;
+
+    private Question[] mQuestions = new Question[] {
+            new Question(R.array.question_1, 3),
+            new Question(R.array.question_2, 3),
+            new Question(R.array.question_3, 1)
+    };
+
+    private void displayQuestion() {
+        Question currentQuestion = mQuestions[mCurrentIndex];
+        String[] questionText = getResources()
+                .getStringArray(currentQuestion.getQuestionResId());
+        mQuestionTextView.setText(questionText[0]);
+        mOption1Button.setText(questionText[1]);
+        mOption2Button.setText(questionText[2]);
+        mOption3Button.setText(questionText[3]);
+        mOption4Button.setText(questionText[4]);
+    }
+
+    private void checkAnswer(int buttonClicked) {
+        Question currentQuestion = mQuestions[mCurrentIndex];
+        if (currentQuestion.getCorrectAnswer() == buttonClicked) {
+            Toast.makeText(QuizActivity.this, R.string.toast_correct,
+                    Toast.LENGTH_SHORT).show();
+        }
+        else {
+            Toast.makeText(QuizActivity.this, R.string.toast_incorrect,
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        if (savedInstanceState != null) {
+            mCurrentIndex = savedInstanceState.getInt(KEY_INDEX, 0);
+        }
+
+        setContentView(R.layout.activity_quiz);
+
+        mOption1Button = (Button) findViewById(R.id.option_1_button);
+        mOption2Button = (Button) findViewById(R.id.option_2_button);
+        mOption3Button = (Button) findViewById(R.id.option_3_button);
+        mOption4Button = (Button) findViewById(R.id.option_4_button);
+        mNextButton = (Button) findViewById(R.id.next_button);
+        mShowHintButton = (Button) findViewById(R.id.hint_show_button);
+        mQuestionTextView = (TextView) findViewById(R.id.question_text_view);
+
+
+        displayQuestion();
+
+        mOption1Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkAnswer(1);
+            }
+        });
+
+        mOption2Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkAnswer(2);
+            }
+        });
+
+        mOption3Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkAnswer(3);
+            }
+        });
+
+        mOption4Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkAnswer(4);
+            }
+        });
+
+        mNextButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mCurrentIndex = (mCurrentIndex + 1) % mQuestions.length;
+                displayQuestion();
+            }
+        });
+
+        mShowHintButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // get the correct answer
+                Question currentQuestion = mQuestions[mCurrentIndex];
+                String[] answers = getResources().getStringArray(
+                        currentQuestion.getQuestionResId());
+                String answer = answers[currentQuestion.getCorrectAnswer()];
+
+                // start HintActivity with correct answer
+                Intent intent = HintActivity.newIntent(QuizActivity.this, answer);
+                startActivity(intent);
+            }
+        });
+
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putInt(KEY_INDEX, mCurrentIndex);
+    }
+}
+```
+
+**HintActivity.java**
+```java
+package com.arthurneuman.triviaquiz;
+
+import android.content.Context;
+import android.content.Intent;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+
+public class HintActivity extends AppCompatActivity {
+
+    private static final String ANSWER = "com.arthurneuman.triviaquiz.answer";
+    private String mCorrectAnswer;
+    private TextView mHintTextView;
+    private Button mConfirmButton;
+
+    public static Intent newIntent(Context context, String answer) {
+        Intent intent = new Intent(context, HintActivity.class);
+        intent.putExtra(ANSWER, answer);
+        return intent;
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_hint);
+        mCorrectAnswer = getIntent().getStringExtra(ANSWER);
+
+        mHintTextView = (TextView) findViewById(R.id.hint_textview);
+        mConfirmButton = (Button) findViewById(R.id.hint_confirm_button);
+
+        mConfirmButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mHintTextView.setText(mCorrectAnswer);
+            }
+        });
+    }
+
+}
+```
