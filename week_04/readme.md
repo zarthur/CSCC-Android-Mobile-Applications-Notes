@@ -37,6 +37,51 @@ project location.  On the next screen, choose "Phone and Tablet" and select
 an API level, in class we'll use API 19.  Next, choose "Empty Activity".
 Finally, name the activity something like "ContactActivity".
 
+Fragments were introduced as part of API level 11 when Android tablets were 
+first introduced.  At the time many developers were supporting API level 8 
+and newer.  Rather than configure their projects to support API level 11 at a 
+minimum, developers were able to take advantage of fragments using Android's 
+support library.  The support library offers backward-compatible versions of 
+new features - allowing developers to cater to a majority of devices while 
+being able to utilize new features.
+
+We'll make use of two classes from the support library: *Fragment* and 
+*FragmentActivity*; in addition to using fragments, we'll need to make use 
+of activities that are designed to interact with fragments.  In order to use 
+the support library and these classes, we'll have to add the support library 
+to the list of libraries our project depends upon.  While we could modify 
+the `build.gradle` file to add the necessary information, Android Studio 
+provides an easier way of adding dependencies.  Choose **File -> Project 
+Structure** from the menu bar, select **app**, and click the **Dependencies** 
+tab.  Here's we can see all the libraries our application depends on.  We can 
+add a dependency by clicking the **+** button and selecting **Library 
+Dependency**.  Begin typing `support` and choose the `support-v4` library. 
+Click **OK** to close the open dialog boxes.  Gradle should automatically sync
+to include our change.
+
+The next step to using fragments is to modify our activity so that it extends
+the *FragmentActivity* class rather than *AppCompatActivity*.  The code in 
+the activity Java file should look similar to the following:
+
+```Java
+package com.arthurneuman.mycontacts;
+
+import android.support.v4.app.FragmentActivity;
+import android.os.Bundle;
+
+public class ContactActivity extends FragmentActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_contact);
+    }
+}
+
+```
+
+Next, we'll create the model layer for our application.  
+
 ### Fragment Lifecycle
 
 ### Hosting a Fragment
