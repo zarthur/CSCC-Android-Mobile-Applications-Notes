@@ -80,9 +80,55 @@ public class ContactActivity extends FragmentActivity {
 
 ```
 
-Next, we'll create the model layer for our application.  
+Next, we'll create the model layer for our application consisting of one class 
+representing contact information.  This class will have three fields: one for 
+the contact's name, one for an email address, and one that represents a 
+unique ID for the contact.  We'll also create the appropriate getters and 
+setters.  We won't have a setter for the ID but will assign a value using the 
+class's constructor instead.
+
+```Java
+package com.arthurneuman.mycontacts;
+
+import java.util.UUID;
+
+public class Contact {
+    private UUID mID;
+    private String mName;
+    private String mEmail;
+
+    public Contact() {
+        mID = UUID.randomUUID();
+    }
+
+    public UUID getID() {
+        return mID;
+    }
+
+    public String getName() {
+        return mName;
+    }
+
+    public void setName(String name) {
+        mName = name;
+    }
+
+    public String getEmail() {
+        return mEmail;
+    }
+
+    public void setEmail(String email) {
+        mEmail = email;
+    }
+}
+```
+Our next step will be to begin working with fragments.  Recall, that our 
+application has to have an activity and, in order to make use of fragments, the 
+activity has to host the fragment.  In addition to hosting fragments, an 
+activity must also manage the lifecycle of fragment instances.
 
 ### Fragment Lifecycle
+
 
 ### Hosting a Fragment
 
