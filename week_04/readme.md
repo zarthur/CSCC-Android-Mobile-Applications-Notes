@@ -226,8 +226,10 @@ The first thing to do is to extend the *Fragment* class from the
 *android.support.v4.app* package. Just like activities, fragments have an
 *OnCreate()* method that is called when the fragment is created.  When our
 *ContactFragment* is created, we'll call the parent's *onCreate()* method and
-assign a new instance of the *Contact* class to a private *mCrime* field.
-
+assign a new instance of the *Contact* class to a private *mCrime* field. Just 
+like with an activity, we can pass saved instance data, in the form of a 
+*Bundle* to the fragment when it's created. 
+ 
 ```java
 package com.arthurneuman.mycontacts;
 
@@ -246,7 +248,140 @@ public class ContactFragment extends Fragment {
 }
 ```
 
+If we were to compare the code in *ContactFragment.onCreate()* to code in 
+previous activities, we might notice that we haven't done anything with the 
+view yet.  For fragments, we rely on the *onCreateView()* method to inflate the 
+view.  Specifically, *ContactFragment.onCreateView()* will be defined as 
+follows:
 
+```java
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container, 
+                          Bundle savedInstanceState) {
+    View v = inflater.inflate(R.layout.fragment_contact, container, false);
+    return v;
+}
+```
+
+As parameters to the *onCreate()* method, the *LayoutInflater* is responsible 
+for creating the view from a specified XML file, the *ViewGroup* specifies 
+where the inflated view will be contained, and the *Bundle* contains any state 
+information that can be used to recreate the view.  The arguments passed to 
+the *LayoutInflater.inflate()* method specify the layout resource id, the 
+*ViewGroup*, and a *boolean* that determines whether or not to add the view 
+to the parent; we'll specify `false` because we'll add the view in the 
+activity's code.  
+
+In *onCreateView()*, we can also add listeners to our *EditText* widgets. 
+We'll update the *Contact* instance, `mCrime`, when the text in the the 
+widgets change.  To do this, we'll add a listener that implements the 
+*TextWatcher* interface. The interface specifies three methods, but we're only 
+interested in *onTextChanged()*, we won't define any behavior for the other 
+methods.  
+
+When we were working with activities, we could find view elements using the 
+*Activity.findViewById()* method; this method was simply a convenience method 
+for the activity's *View.findViewById()* method; fragments do not have this 
+convenience method, so we have to have an instance of *View*.  Notice 
+we do have an instance in the *onCreateView()* method.  The following code 
+will update the name associated with `mCrime` by first finding the name 
+*EditText* and assigning it to a field on on *ContactFragment* then getting 
+the text as it's changed and calling *mCrime.setName()*.
+
+```java
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                          Bundle savedInstanceState) {
+    View v = inflater.inflate(R.layout.fragment_contact, container, false);
+    
+    mNameField = (EditText)v.findViewById(R.id.contact_name);
+    mNameField.addTextChangedListener(new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, 
+                                      int after) {
+            // No new behavior 
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, 
+                                  int count) {
+            mContact.setName(s.toString());
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            // No new behvior
+        }
+    });
+    
+    return v;
+}
+```
+
+We can do something similar with the email *EditText* and *mCrime.setEmail()* 
+method.  
+
+After we've added all the code to create the fragment, inflate its view, and 
+add logic to the various widgets, `ContactFragment.java` should contain code 
+similar to the following:
+
+```java
+package com.arthurneuman.mycontacts;
+
+
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+
+public class ContactFragment extends Fragment {
+    private Contact mContact;
+    private EditText mNameField;
+    private EditText mEmailField;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mContact = new Contact();
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_contact, container, false);
+
+        mNameField = (EditText)v.findViewById(R.id.contact_name);
+        mNameField.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count,
+                                          int after) {
+                // No new behavior
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before,
+                                      int count) {
+                mContact.setName(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // No new behvior
+            }
+        });
+
+        return v;
+    }
+}
+```
+
+Though *ContactFragment* is not complete, if we start our app, we won't see 
+its view; a fragment can't put its view on the screen on its own.  In order 
+to see the fragment, we'll have to rely on an activity.
 
 ### The FragmentManager and the Fragment Lifecycle
 Much like an activity, a fragment transitions between states such as running,
