@@ -374,9 +374,30 @@ public class ContactFragment extends Fragment {
             }
         });
 
+        mEmailField = (EditText)v.findViewById(R.id.contact_email);
+        mEmailField.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count,
+                                          int after) {
+                // No new behavior
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before,
+                                      int count) {
+                mContact.setEmail(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // No new behvior
+            }
+        });
+
         return v;
     }
 }
+
 ```
 
 Though *ContactFragment* is not complete, if we start our app, we won't see 
@@ -387,5 +408,74 @@ to see the fragment, we'll have to rely on an activity.
 Much like an activity, a fragment transitions between states such as running,
 paused, and stopped and has corresponding methods for each state transition.
 
+For a given activity, the *FragmentManager* is responsible for managing 
+fragments and adding their views to the view hierarchy.  The FragmentManager 
+handles a list of fragments and and a back stack of fragment transactions. 
+The FragmentManager is also responsible for calling the lifecycle methods of a 
+fragment.  
 
-## Application Architecture with Fragments
+To use the Fragment manger, we can add teh following to *ContactActivity*'s 
+*onCreate()* method:
+
+```java
+FragmentManager fm = getSupportFragmentManager();
+```  
+
+With the FragmentManager, we can now create a fragment transaction.  Fragment 
+transactions are used to add, remove, or replace fragments in the fragment 
+list; we have to use a fragment transaction to add our fragment.  To create 
+a new transaction we'll use *FragmentManager*'s *beginTransaction()*, *add()*, 
+and *commit()* methods.  
+
+```java
+Fragment fragment = fm.findFragmentById(R.id.fragment_container);
+        
+if (fragment==null) {
+    fragment = new ContactFragment();
+    fm.beginTransaction()
+            .add(R.id.fragment_container, fragment)
+            .commit();
+}
+```
+
+Here we first check to see if the fragment was previously added by asking 
+the FragmentManager for the fragment identified by the *fragment_container*. 
+If there is no existing fragment, we create a new fragment transaction and 
+add a new *ContactFragment* with *fragment_container*.  It's important to check 
+if the fragment is already part of the FragmentManager's fragment list. If 
+*ContactActivity* is destroyed and reloaded due to rotation or Android's 
+attempt to conserve memory, the Fragmentmanager will save it's list of 
+fragments and this can be reloaded.
+
+`ContactActivity.java` should now look similar to this:
+
+```java
+package com.arthurneuman.mycontacts;
+
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
+
+public class ContactActivity extends FragmentActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_contact);
+
+        FragmentManager fm = getSupportFragmentManager();
+        Fragment fragment = fm.findFragmentById(R.id.fragment_container);
+
+        if (fragment==null) {
+            fragment = new ContactFragment();
+            fm.beginTransaction()
+                    .add(R.id.fragment_container, fragment)
+                    .commit();
+        }
+
+    }
+}
+```
+
+If we run the app, we should now see *ContactFragment*.
