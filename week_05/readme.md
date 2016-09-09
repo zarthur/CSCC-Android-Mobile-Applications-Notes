@@ -31,12 +31,117 @@ test some functionality that depends on a *Bundle*; rather than write an
 instrumented test, we can write a local test if we mock *Bundle*.
 
 ### Setup
+We're going to focus on local tests.  To create and run our tests, we'll make 
+use of two testing frameworks: JUnit and Mockito.  This will require that we 
+explicitly indicate to the build system, Gradle, that our project depends on 
+these frameworks.  To do this, we'll modify the module's `build.gradle` file.
+
+![gradle](images/module-gradle.png)
+
+The dependencies section should look similar to this:
+
+```
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    testCompile 'junit:junit:4.12'
+    compile 'com.android.support:appcompat-v7:23.4.0'
+    compile 'com.android.support:support-v4:24.1.0'
+}
+```
+
+Notice that there's already an entry for JUnit.  Let's add an entry for 
+Mockito. The dependencies section should now looks like this:
+
+```
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:1.10.19'
+    compile 'com.android.support:appcompat-v7:23.4.0'
+    compile 'com.android.support:support-v4:24.1.0'
+}
+```
+
+Once the additional dependency is added, you should be prompted to sync Gradle.
 
 ### Creating Tests
+When viewing the structure of our app in the Android view, we can see three 
+different packages, one that contains the classes we've created for our app and 
+two that contain test classes.
+
+![android-structure](images/android-test.png)
+
+If we view the structure as a typical Java project, we can see that these three 
+different packages are located in different folders within the `src` folder.
+
+![project-structure](images/project-test.png)
+
+We'll add our local tests to the `test` folder and instrumented tests to the 
+`androidTest` folder.  
+
+Notice that there is a simple example of each kind of test in each folder. 
+Let's add a local test.
+
+Right-click on the test package/folder and select **New** and **Java Class**. 
+Name the new class `ContactTest`.  Let's start by first importing a couple of 
+classes:
+
+```Java
+import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+```
+
+The `org.junit.Test` class will be used as a decorator to indicated that a 
+method represents a test.  `assertTrue` will be used to determine if the 
+test passes or fails.  We can define a test of the getters and setters of 
+the *Contact* class so that our entire `ContactTest.java` file looks like this:
+
+```java
+package com.arthurneuman.mycontacts;
+
+import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+
+public class ContactTest {
+    @Test
+    public void contactAccessorTest() {
+        String name = "Test Name";
+        String email = "name@test.com";
+        Contact contact = new Contact();
+        contact.setName(name);
+        contact.setEmail(email);
+        assertTrue((contact.getName().equals(name)
+                && contact.getEmail().equals(email)));
+    }
+}
+```
+
+In the *ContactTest* class we define one test: *contactAccessorTest()*.  In the 
+test we set two strings, one for a name and one for an email address. Next, we 
+create a new instance of the *Contact* class and set the name and email fields 
+using the appropriate setters.  Finally, we use `assertTrue` to test that 
+the getters return the values we supplied to the setters - this is the expected 
+behavior.  
+
+If *Contact* had more complex functionality, we could define additional tests 
+to verify that *Contact* behaved in the expected manner.
+ 
+To run the test, we can either right-click on the `ContactTest.java` file and 
+select **Run 'ContactTest'** or right-click on the "test" folder and select 
+**Run 'Tests in 'mycontacts''**.  In either case, if the tests pass, we should 
+see a message indicating that the tests passed.
+
+Let's change the *contactAccessorTest()* method so that the last line is 
+
+```java
+assertTrue((contact.getName().equals(email)
+        && contact.getEmail().equals(name)));
+```
+
+We'll see a message indicating that a test failed and an **AssertionError** 
+indicating exactly which test failed.
 
 ### Mocking Android Dependencies
-
-### Running Tests
 
 ## Profiling
 
