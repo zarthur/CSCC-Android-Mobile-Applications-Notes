@@ -6,7 +6,7 @@ College.
 Weekly lecture notes can be found in the various subdirectories or by
 following the links below.
 
-- [Week 1 - Android Studio and Material Design](week_01/readme.md)
+- [Week 1 - Android Studio, GitHub, and Material Design](week_01/readme.md)
 - [Week 2 - MVC and Activities](week_02/readme.md)
 - [Week 3 - Debugging](week_03/readme.md)
 - [Week 4 - Fragments](week_04/readme.md)
