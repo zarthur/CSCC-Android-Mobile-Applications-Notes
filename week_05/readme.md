@@ -142,8 +142,72 @@ We'll see a message indicating that a test failed and an **AssertionError**
 indicating exactly which test failed.
 
 ### Mocking Android Dependencies
+By default, when we run our tests, they are executed with a modified version 
+of the `android.jar` file that normally contains code for the Android 
+framework.  The modified version will throw an exception when we attempt to 
+use any Android classes or methods - this ensures we are testing our code and 
+not implicitly relying on Android functionality. However, some of our code 
+will be tightly coupled to the Android framework and will require certain 
+Android classes to test.
 
-## Profiling
+As a somewhat trivial example, suppose *ContactActivity* includes a method 
+for getting the package name from a *Context* object:
+
+```java
+    public String getPackage(Context context) {
+        return context.getPackageName();
+    }
+```
+
+Suppose we wanted to test this.  Because it depends on *Context*, a class 
+from the Android framework, the test would fail with an exception if we wrote 
+it like our previous test.  Instead, we have to mock the *Context* class.  By 
+mocking it, we have to define its methods' behaved as necessary.  Specifically,
+we'll need to define behavior for *Context.getPackageName()*.
+
+Here's the complete test class:
+
+```java
+package com.arthurneuman.mycontacts;
+
+import android.app.Activity;
+import android.content.Context;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import static junit.framework.Assert.assertEquals;
+import static org.mockito.Mockito.when;
+
+@RunWith(MockitoJUnitRunner.class)
+public class ContactActivityTest {
+    private static final String PACKAGE_NAME = "com.test.mycontacts";
+    @Mock
+    Context mContext;
+
+    @Test
+    public void contactFragmentCreationTest() {
+        when(mContext.getPackageName()).thenReturn(PACKAGE_NAME);
+        ContactActivity contactActivity = new ContactActivity();
+        String packageName = contactActivity.getPackage(mContext);
+        assertEquals(PACKAGE_NAME, packageName);
+    }
+}
+
+```
+
+First, we have to annotate our class with `@RunWith(MockitoJUnitRunner.class)`. 
+Next, we specify the Android classes we'll mock using the the `@Mock` 
+annotation. We define the behavior of the mocked objects using the 
+`when(...).thenReturn(...)` construction to specify the return value when a 
+specific method is called.  In the example, we then create an instance of 
+*ContactActivity* and call the *getPackage()* method with the mocked 
+context.  If things behave as expected, the value returned by 
+*ContactActivity.getPackage()* should be the same as the value returned by 
+the *Context*, which we defined.  This trivial example would throw an exception 
+if we didn't create a mocked *Context* class. 
 
 ### Performance Monitors
 
