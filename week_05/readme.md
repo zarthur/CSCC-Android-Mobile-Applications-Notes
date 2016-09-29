@@ -209,6 +209,49 @@ context.  If things behave as expected, the value returned by
 the *Context*, which we defined.  This trivial example would throw an exception 
 if we didn't create a mocked *Context* class. 
 
-### Performance Monitors
+## Profiling 
+Users expect apps to start quickly and be responsive.  As we develop the app it 
+will be important to not only test functionality using unit test but to also 
+examine performance using the profiling tools included with Android Studio.
 
-### Data Analysis
+### Performance Monitors
+Android Studio includes a collection of tools we can use to monitor resource 
+usage of app.  These tools are available in the **Android Monitor** view. 
+We've already used one of the monitors, *logcat*, when viewing log messages.
+
+![logcat](images/monitor-logcat.png)
+
+Next to the **logcat** tab, we can find the **Monitors** tab.  There are four 
+charts that are displayed providing information about usage over time:
+
+- Memory
+- CPU
+- Network
+- GPU
+
+![monitors](images/monitor-monitors.png)
+
+Each chart has a set of tools available for use.  The memory chart shows our 
+app's memory usage over time.  In adddition to being able to track the usage,
+we can also use the monitor to dump the heap, where all runtime data is stored, 
+to what is consuming memory; track memory allocations of objects; and force 
+the garbage collector to run. A common problem, especially when using media, is 
+consuming more memory than is available leading to a crash.  The memory monitor 
+and it's tools can help determine what is consuming large amounts of memory.
+
+The CPU monitor displays the app's processor usage.  Additionally, we can track 
+method execution using the method tracer tool.  The CPU monitor is useful if we 
+notice that the app is frequently unresponsive. We might have several 
+long-running methods in different threads or a lot of short-running threads.  
+
+The network monitor is useful for tracking network usage.  If we find that our 
+app is transmitting or receiving more data than we expect, it might be due to a 
+bug.  Given that a lot of users have limited bandwidth, it's important that we 
+track down excessive usage.  Similarly, if we expect to connect to an external 
+data source and don't appear the be getting/sending data, we can confirm this 
+using the network monitor.
+
+The GPU monitor indicates the time required to render the apps interface. 
+Unless the app makes use of advanced graphics, we shouldn't expect rendering to 
+take a lot of time.  If we have a lot of UI elements, we might see this 
+reflected in the GPU monitor. 
