@@ -135,8 +135,42 @@ public class ContactFragment extends Fragment {
 }
 ```
 
-## Styles, Themes, and Theme Attributes
+## Layout Attributes
+Now that we've added a widget and code to do something when the widget is used, 
+let's return to our layout `fragment_contact.xml`.  For each widget defined 
+in the layout, there are some attributes worth noting beyond what we've made 
+use of so far.
 
-## Screen Pixel Density
+A *style* is a resource that contains attributes defining the appearance and 
+behavior of a widget.  Styles, like layouts, are specified using XML.  For 
+example, the following defines a style named **BigBoldStyle**. 
 
-## Layout Parameters
+```xml
+    <style name="BigBoldStyle">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+```
+
+We can define styles in `res/values/styles.xml`.  Be careful when specifying 
+attribute names - they are case sensitive.
+
+We can use the style by setting a widget's property or by specifying it in 
+the resource XML like this:
+
+```xml
+ <EditText style="@style/BigBoldStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/contact_name"
+        android:hint="@string/name_hint"
+        android:padding="20dp"
+        android:inputType="textPersonName"/>
+```
+
+Compare the text in the *EditText* widgets before and after changing the style.
+
+![layout](images/style.png)
+
+A **theme** is a collection of styles.  Like a style, a theme can be specified 
+in the `styles.xml` file.
