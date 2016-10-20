@@ -252,5 +252,57 @@ element into the new **activity** element; this tells Android which activity
 should be used when the app starts. If we start the app now, we'll see 
 the activity with its *FrameLayout* hosting an empty **AddressBookFragment**.
 
+## Creating the View
+Now that we've updated the model and started work on updating the controller, 
+let's turn our attention to the view.  What we'd like to do is display a list 
+of contacts in a way that will allow us to scroll through the list if there are 
+more than can be displayed at once on the screen.  To do this, we'll make use 
+of a *RecyclerView*.  The *RecyclerView* is a subclass of *ViewGroup* that 
+displays a list of child *View* objects with each object corresponding to an 
+item in some other list.  For us, the *View* objects will correspond to 
+contacts stored in the *AddressBook* instance.  
 
+Our first implementation will be simple: it will display a list of contact 
+names using *TextView*s. Right now, our *AddressBook* class creates 100 
+contacts but not all of them will be able to be displayed on the screen.  
+Rather than creating 100 *TextView*s when only a fraction will be displayed on 
+screen, *RecyclerView* handles creating just enough *TextView*s and reusing 
+them as we scroll through the list.
+
+The *RecyclerView* is only responsible for recycling its child *View* objects 
+and positioning them on the screen; it does not create the *View* objects 
+or configure them.  In order to do those tasks, we need to use a *ViewHolder* 
+and an *Adapter*.
+
+A *ViewHolder* is responsible for keeping track of a *View* and handles wiring 
+a *View* when the corresponding data changes.  An *Adapter* is responsible for 
+creating *ViewHolder*s and loading data from the model and binding it to a 
+*ViewHolder*.  The *RecyclerView* will use the *Adapter* to create a sufficient 
+number of *ViewHolder* depending on how many can be displayed.  When the time 
+comes to display data (or as the list is scrolled through), the *RecyclerView* 
+will supply a *ViewHolder* to the *Adapter* and the *Adapter* will bind model 
+data to the *View* associated with the *ViewHolder*.  
+
+In order to use a *RecyclerView*, we have to add a dependency to our project.  
+From the menus, choose **File -> Project Structure...**, select the **app** 
+module, then click the **Dependencies** tab.  Click the add button, select 
+**Library** and choose the `com.android.support:recyclerview-v7` library.
+
+We'll place a *RecyclerView* in the *AddressBookFragment* layout but first 
+we have to create that layout file. Right-click the `res/layout` folder and 
+select **New -> Layout resource file"; name it `fragment_address_book` and 
+change the root element to `android.support.v7.widget.RecyclerView`.  Set the 
+ID attribute to `@+id/address_book_recycler_view`. The XML for the new layout 
+should look similar to the following:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.RecyclerView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/address_book_recycler_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+</android.support.v7.widget.RecyclerView>
+```
+      
 
