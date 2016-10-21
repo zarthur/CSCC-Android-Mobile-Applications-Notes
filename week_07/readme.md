@@ -305,4 +305,292 @@ should look similar to the following:
 </android.support.v7.widget.RecyclerView>
 ```
       
+Now that we've defined the view in the layout file, let's connect the view to 
+the fragment by adding the following code to *AddressBookFragment*:
 
+```java
+public class AddressBookFragment extends Fragment {
+    private RecyclerView mAddressBookRecyclerView;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_address_book, container,
+                false);
+
+        mAddressBookRecyclerView = 
+                (RecyclerView) view.findViewById(R.id.address_book_recycler_view);
+        mAddressBookRecyclerView.setLayoutManager(
+                new LinearLayoutManager(getActivity()));
+        
+        return view;
+    }
+}
+```
+
+Notice that this is similar to what we did when we created a *ContactFragment*.
+When we create a new *RecyclerView*, we also have to specify a *LayoutManager*. 
+The *LayoutManager* will actually positioning *View*s on the screen and define 
+the scrolling behavior.  Here, we're creating a new *LinearLayoutManager* and 
+setting it as the *LayoutManager*.
+
+If we were to run the app now, we still wouldn't see any of our contacts.  We 
+still have to provide implementations for the *Adapter* and the *ViewHolder*. 
+Because the *ViewHolder* and *Adapter* will be unique to and work closely with 
+the *RecyclerView* in *AddressBookFragment*, we can define them as nested 
+classes.  *ViewHolder* is responsible for keeping track of a *View* so its code 
+can be as simple as the following:
+
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+    private class ContactHolder extends RecyclerView.ViewHolder {
+        public TextView mContactNameTextView;
+        
+        public ContactHolder(View itemView) {
+            super(itemView);
+            mContactNameTextView = (TextView) itemView;
+        }
+    }
+}
+```
+
+The *Adapter* class will be used with *RecyclerView* when a *ViewHolder* 
+has to be created or when the corresponding *View* has to be updated; 
+additionally, the *Adapter* has to be able to provide the total number of 
+items.  In order to do these things, our implementation of *Adapter* has to 
+provide implementations for three methods: *onCreateViewHolder()* when a new 
+*View* is needed to display an item, *onBindViewHolder()* when updating 
+the view, and *getItemCount()* to get the total number of items.
+
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+    private class ContactAdapter extends RecyclerView.Adapter<ContactHolder> {
+        private List<Contact> mContacts;
+        
+        public ContactAdapter(List<Contact> contacts) {
+            mContacts = contacts;
+        }
+        
+        @Override
+        public ContactHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
+            View view = layoutInflater.inflate(
+                    android.R.layout.simple_list_item_1, parent, false);
+            return new ContactHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(ContactHolder holder, int position) {
+            Contact contact = mContacts.get(position);
+            holder.mContactNameTextView.setText(contact.getName());
+        }
+
+        @Override
+        public int getItemCount() {
+            return mContacts.size();
+        }
+    }
+} 
+```
+
+The constructor for *ContactAdapter* will require a list of contacts that we'll 
+use when the *onBindViewHolder()* and *getItemCount()* methods are called. In 
+*onCreateViewHolder()*, notice that we use 
+`android.R.layout.simple_list_item_1` as the layout to be inflated; this comes 
+from the Android standard library.
+
+Next, we have to connect *ContactActivity* and the *RecyclerView*.  To do 
+this, we'll add a method to *AddressBookFragment* that creates an instance 
+of *AddressBook*, uses it to create an instance of *ContactAdapter*, and 
+calls the *RecyclerView*'s *setAdapter()* method.  We'll call this new method 
+before returning **view** in *onCreateView()*.
+
+```java
+public class AddressBookFragment extends Fragment {
+    private RecyclerView mAddressBookRecyclerView;
+    private ContactAdapter mContactAdapter;
+    
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_address_book, container,
+                false);
+
+        mAddressBookRecyclerView = (RecyclerView) view.findViewById(
+                R.id.address_book_recycler_view);
+        mAddressBookRecyclerView.setLayoutManager(
+                new LinearLayoutManager(getActivity()));
+
+        updateUI();
+        
+        return view;
+    }
+    
+    private void updateUI() {
+        AddressBook addressBook = AddressBook.get();
+        List<Contact> contacts = addressBook.getContacts();
+        mContactAdapter = new ContactAdapter(contacts);
+        mAddressBookRecyclerView.setAdapter(mContactAdapter);
+    }
+...
+}
+```
+
+If we run our app and scroll, we should see something like this:
+
+![Address Book](images/addressbook.png)
+
+Finally, we can add support for pressing items.  To do this, let's update 
+*ContactHolder* to be the **OnClickListener** for its associated view.  When 
+an item is pressed, we'd like it to display a message containing the contact's 
+name.  Right now, we directly set the the text displayed by the view in 
+*ContactAdapter* by working directly with a *ContactHolder* field.  Let's 
+rework this so that the *ContactActivity* has to call a method on 
+*ContactHolder* that takes a *Contact* and sets the text.  
+
+Here's what *ContactHolder* looks like now:
+
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+    private class ContactHolder extends RecyclerView.ViewHolder
+            implements View.OnClickListener{
+        private TextView mContactNameTextView;
+        private Contact mContact;
+
+        public ContactHolder(View itemView) {
+            super(itemView);
+            itemView.setOnClickListener(this);
+            mContactNameTextView = (TextView) itemView;
+        }
+
+        public void bindContact(Contact contact) {
+            mContact = contact;
+            mContactNameTextView.setText(contact.getName());
+        }
+
+        @Override
+        public void onClick(View v) {
+            Toast.makeText(getActivity(), mContact.getName() + " clicked.", 
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+    ...
+}
+```
+
+We can now replace the code in *ContactAdapter* that works with 
+*mContactNameTextView* with code tha calls the new *bindContact()* method:
+
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+    private class ContactAdapter extends RecyclerView.Adapter<ContactHolder> {
+        ...
+        @Override
+        public void onBindViewHolder(ContactHolder holder, int position) {
+            Contact contact = mContacts.get(position);
+            holder.bindContact(contact);
+        }
+        ...
+    }
+}
+```
+
+The entire `AddressBook.java` file should now look similar to this:
+
+```java
+package com.arthurneuman.mycontacts;
+
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.util.List;
+
+public class AddressBookFragment extends Fragment {
+    private RecyclerView mAddressBookRecyclerView;
+    private ContactAdapter mContactAdapter;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_address_book, container,
+                false);
+
+        mAddressBookRecyclerView = (RecyclerView) view.findViewById(
+                R.id.address_book_recycler_view);
+        mAddressBookRecyclerView.setLayoutManager(
+                new LinearLayoutManager(getActivity()));
+
+        updateUI();
+
+        return view;
+    }
+
+    private void updateUI() {
+        AddressBook addressBook = AddressBook.get();
+        List<Contact> contacts = addressBook.getContacts();
+        mContactAdapter = new ContactAdapter(contacts);
+        mAddressBookRecyclerView.setAdapter(mContactAdapter);
+    }
+
+    private class ContactHolder extends RecyclerView.ViewHolder
+            implements View.OnClickListener{
+        private TextView mContactNameTextView;
+        private Contact mContact;
+
+        public ContactHolder(View itemView) {
+            super(itemView);
+            itemView.setOnClickListener(this);
+            mContactNameTextView = (TextView) itemView;
+        }
+
+        public void bindContact(Contact contact) {
+            mContact = contact;
+            mContactNameTextView.setText(contact.getName());
+        }
+
+        @Override
+        public void onClick(View v) {
+            Toast.makeText(getActivity(), mContact.getName() + " clicked.",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private class ContactAdapter extends RecyclerView.Adapter<ContactHolder> {
+        private List<Contact> mContacts;
+
+        public ContactAdapter(List<Contact> contacts) {
+            mContacts = contacts;
+        }
+
+        @Override
+        public ContactHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
+            View view = layoutInflater.inflate(
+                    android.R.layout.simple_list_item_1, parent, false);
+            return new ContactHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(ContactHolder holder, int position) {
+            Contact contact = mContacts.get(position);
+            holder.bindContact(contact);
+        }
+
+        @Override
+        public int getItemCount() {
+            return mContacts.size();
+        }
+    }
+}
+```
