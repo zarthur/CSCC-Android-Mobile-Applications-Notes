@@ -129,10 +129,126 @@ public class ContactFragment extends Fragment {
 ```
 
 If we run the app now, we should be able to tap on individual contacts and view 
-their details.
-
+their details. Though having *ContactFragment* access the intent that is used 
+to start *ContactActivity* resulted in straightforward code, the fragment is no 
+longer usable with any activity that doesn't provide the appropriate intent. 
 
 ### Using Fragment Arguments
+Rather than extracting information from an *Activity*, a *Fragment* can have 
+a *Bundle* attached to it.  Like intent extras, a bundle contains key/value 
+pairs known as arguments.  A bundle can be attached to a fragment using the 
+*Fragment.setArguments()* method but it must be used after the fragment 
+instance is created and before it is added to an activity.  To do this, we'll 
+add a static method to *ContactFragment*:
+
+```java
+public class ContactFragment extends Fragment {
+    ...
+    private static final String ARG_CONTACT_ID = "contact_id";
+
+    public static ContactFragment newInstance(UUID contactID) {
+        ContactFragment contactFragment = new ContactFragment();
+        Bundle args = new Bundle();
+        args.putSerializable(ARG_CONTACT_ID, contactID);
+        contactFragment.setArguments(args);
+        return contactFragment;
+    }
+    ...
+}
+``` 
+
+*ContactActivity* should now call the new static method when creating the 
+fragment:
+
+```java
+public class ContactActivity extends SingleFragmentActivity {
+    private static final String EXTRA_CONTACT_ID =
+            "com.arthurneuman.mycontacts.contact_id";
+    ...
+    @Override
+    protected Fragment createFragment() {
+        UUID contactID = (UUID) getIntent()
+                .getSerializableExtra(EXTRA_CONTACT_ID);
+        return ContactFragment.newInstance(contactID);
+    }
+}
+```
+
+We can also make *ContactActivity.EXTRA_CONTACT_ID* private.
+
+At this point, we've gone from the fragment needing to know something specific 
+about it's activity (the intent extra) to the activity needing to know 
+something specific about the fragment it's creating (that it has a static 
+method that can create an instance with a contact ID); this is an acceptable 
+trade-off as hosting activities can be expected to know the specifics of 
+how to host their fragments.
+
+Finally, we have to use the contact ID to get an instance of *Contact* in 
+*ContactFragment*.  To do this, we can replace the code responsible for 
+accessing the hosting activity's intent in *ContactFragment.onCreate()*:
+
+```java
+public class ContactFragment extends Fragment {
+    ...
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        UUID contactID = (UUID) getArguments().getSerializable(ARG_CONTACT_ID);
+        mContact = AddressBook.get().getContact(contactID);
+    }
+}
+```
+
+If we run the app, it should behave as it did before but now *ContactFragment* 
+isn't so dependent on its hosting activity.
+
 ### Updating
+Recall that our code in *contactFragment* included event listeners that updated 
+the model when changes were made.  If we tap a contact from the list, change 
+it, then go back to the list, we don't see the changes.  In order for the 
+changes to appear, we have to modify the *RecyclerView* *Adapter* to expect 
+changes.  
+
+The *ActivityManager* maintains a stack known as the "back stack".  As 
+activities are created, they are added to the back stack so that a user can use 
+the back button to return to a previous activity.  When our app starts, the 
+back stack contains *AddresBookActivity*.  When a row is pressed and an 
+instance of *ContactActivity* is created, that new instances is added to the 
+back stack.  When the back button is pressed, the top activity is removed and 
+the next activity is displayed.  
+
+When an activity is no longer at the top of the back stack, it is paused and 
+usually stopped.  When it returns to the top, it is started, if necessary, and 
+resumed.  When *AddresBookActivity* is resumed, the OS calls *onResume()* on 
+any fragments hosted by the activity.  We can use 
+*AddressBookFragment.onResume()* to update the list by calling 
+*AddresBookFragment.updateUI()*.  We have to be careful to not create a new 
+*ContactAdapter* if it already exists; we can call 
+*ContactAdapter.notifyDataSetChanged()* instead.
+
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateUI();
+    }
+
+    private void updateUI() {
+        AddressBook addressBook = AddressBook.get();
+        List<Contact> contacts = addressBook.getContacts();
+        if (mContactAdapter == null) {
+            mContactAdapter = new ContactAdapter(contacts);
+            mAddressBookRecyclerView.setAdapter(mContactAdapter);
+        }
+        else {
+            mContactAdapter.notifyDataSetChanged();
+        }
+    }
+    ...
+}
+``` 
+
 
 ## ViewPagers
