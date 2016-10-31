@@ -45,7 +45,7 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.4.0'
-    compile 'com.android.support:support-v4:24.1.0'
+    compile 'com.android.support:support-v4:23.4.0'
 }
 ```
 
@@ -58,7 +58,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:1.10.19'
     compile 'com.android.support:appcompat-v7:23.4.0'
-    compile 'com.android.support:support-v4:24.1.0'
+    compile 'com.android.support:support-v4:23.4.0'
 }
 ```
 
