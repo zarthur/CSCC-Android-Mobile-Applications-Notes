@@ -250,5 +250,190 @@ public class AddressBookFragment extends Fragment {
 }
 ``` 
 
-
 ## ViewPagers
+We now have the ability to view a list of contacts and view the details of each 
+one individually.  While that is useful, it isn't a quick task to move from 
+one contact to the next: we have to tap the back button then tap the next 
+contact, repeating this process everytime we want to see another contact.  A 
+lot of apps allow users to swipe left and right between similar items; we can 
+do the same for our contact details.  In order to support this, we'll create a 
+new activity to host *ContactFragment* with a *ViewPager* layout; *ViewPager* 
+is responsible for supporting the swiping behavior.   We'll see that 
+*ViewPager* is similar to *RecyclerView* in some ways; one key difference is 
+that while *RecyclerView* can display several things on screen, *ViewPager* 
+is used to display only one item on screen at a time.
+
+To begin, let's create a new layout resource file, `activity_contact_pager.xml` 
+with root element `android.support.v4.view.ViewPager`.  Be sure to set its ID. 
+The XML for the new resource should look similar to the following:
+
+```XML
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v4.view.ViewPager
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/activity_contact_pager_view_pager">
+
+</android.support.v4.view.ViewPager>
+```
+
+Next, let's create a new activity, *ContactPagerActivity* that will derive 
+from *FragmentActivity* and override its *onCreateView()* method to set the 
+view using the layout we created:
+
+```java
+public class ContactPagerActivity extends FragmentActivity {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_contact_pager);
+    }
+}
+```
+
+Like a *RecyclerView* that requires an *Adapter* to provide views, a 
+*ViewPager* also requires a special *Adapter* to provide views: a 
+*PagerAdapter*.  While there are a lot more details to the interactions between 
+a *ViewPager* and a *PagerAdapter* than between a *RecyclerView* and its 
+*Adapter*, we can use a subclass of *PagerAdapter*, *FragmentStatePagerAdapter* 
+to handle most of the details.  In order to use a *FragmentStatePagerAdapter*, 
+we'll need to implement two methods: *getCount()* and *getItem()*. The 
+*getCount()* method will return the total number of items.  The *getItem()* 
+method takes an integer parameter and should return a *Fragment* configured to 
+display the item at the corresponding integer position.  
+
+In the *ContactPagerActivity.onCreate()* method, we can get the *ViewPager* 
+in the new layout using its ID, then use the *ViewPager.setAdapter()* method 
+to assign a new *FragmentStatePagerAdapter* to it.  When we create a new 
+instance of *FragmentStatePagerAdapter*, we'll need to provide it the 
+fragment manager as a parameter.  Additionally, we'll need to use *AddressBook* 
+to get a list of contacts.
+
+Here's the code necessary to create an instance of *FragmentStatePagerAdapter*, 
+override its *getItem()* and *getCount()* methods, and assign it to the 
+*ViewPager*:
+
+```java
+public class ContactPagerActivity extends FragmentActivity {
+    private ViewPager mViewPager;
+    private List<Contact> mContacts;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_contact_pager);
+
+        mContacts = AddressBook.get().getContacts();
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        mViewPager = (ViewPager) findViewById(
+                R.id.activity_contact_pager_view_pager);
+
+        mViewPager.setAdapter(new FragmentStatePagerAdapter(fragmentManager) {
+            @Override
+            public Fragment getItem(int position) {
+                Contact contact = mContacts.get(position);
+                return ContactFragment.newInstance(contact.getID());
+            }
+
+            @Override
+            public int getCount() {
+                return mContacts.size();
+            }
+        });
+    }
+}
+```
+
+Now that we've coded *ContactPagerActivity*, we'll need to replace usages 
+of *ContactActivity* in other places in our code.  Recall that we added a 
+*newIntent()* method to *ContactActivity* to allow *AddresBookActivity* to 
+start it; we'll have to do something similar to *ContactPagerActivity*.  An 
+intent extra will be used to indicate which initial contact should be 
+displayed.  We can use the ID with the *ViewPager.setCurrentItem()* method 
+to display the correct contact's details:
+
+```java
+public class ContactPagerActivity extends FragmentActivity {
+    private static final String EXTRA_CONTACT_ID =
+            "com.arthurneuman.mycontacts.contact_id";
+
+    private ViewPager mViewPager;
+    private List<Contact> mContacts;
+
+    public static Intent newIntent(Context packageContext, UUID contactID) {
+        Intent intent = new Intent(packageContext, ContactPagerActivity.class);
+        intent.putExtra(EXTRA_CONTACT_ID, contactID);
+        return intent;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        ...
+        UUID contactID = (UUID) getIntent()
+                .getSerializableExtra(EXTRA_CONTACT_ID);
+        for (int index = 0; index < mContacts.size(); index++) {
+            if (mContacts.get(index).getID().equals(contactID)) {
+                mViewPager.setCurrentItem(index);
+                break;
+            }
+        }
+    }
+}
+```
+
+We also need to update *AddresBookFragment*'s *ContactHolder.onClick()* method 
+to use the new intent:
+
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+    private class ContactHolder extends RecyclerView.ViewHolder
+            implements View.OnClickListener{
+        ...
+        @Override
+        public void onClick(View v) {
+            Intent intent = ContactPagerActivity.newIntent(getActivity(),
+                    mContact.getID());
+            startActivity(intent);
+        }
+    }
+    ...
+}
+```
+
+Finally, we need to update the app's manifest, 
+`app/manifests/AndroidManifest.xml` to include the new activity; we can replace 
+*ContactActivity* with *ContactPagerActivity*:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.arthurneuman.mycontacts">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <activity android:name=".ContactPagerActivity">
+        </activity>
+        <activity android:name=".AddressBookActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+```
+
+You should now be able to run the app, choose a contact, and swipe between 
+them.  If the app crashes when pressing a contact, check the `build.gradle` 
+file and make sure that the version of the `com.android.support:support-v4` 
+dependency matches the value of `compileSdkVersion`.  If you have to change 
+the version, be sure to sync gradle and choose **Build -> Clean Project** from 
+the menus.  
+
