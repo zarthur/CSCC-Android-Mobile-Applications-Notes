@@ -48,5 +48,265 @@ The file should contain something like this:
 
 
 ## Menus
+The right area of the toolbar is reserved for the menu.  A menu consists of 
+action items that can perform an action on the current screen or on the 
+app as a while.  We'll create actions to create a contact and to display 
+favorites or all contacts.  We'll need some string resources for use with the 
+menu; add these to `res/values/strings.xml`:
+
+```xml
+    <string name="new_contact">New Contact</string>
+    <string name="show_favorites">Show Favorites</string>
+    <string name="show_all">Show All</string>
+```
+
+Menus, like layouts, are a type of resource file.  To add a new menu resource 
+file, right click on the project's `res` folder and select 
+**New -> Android resource file**.  Name the file `fragment_address_book` (since 
+we'll be using it with the address book fragment) and set **Resource type** to 
+*Menu* 
+
+Using the **Design** view, drag a *Menu Item* and drop it on the toolbar; set 
+its **id** to `menu_item_create_contact` and its **title** to 
+`@string/new_contact`. Drag another *Menu Item* below the previous one and set 
+its **id** to `menu_item_toggle_favorites` and its **title** to 
+`@string/show_favorites`.  The XML for the menu resource file should look 
+like this:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:title="@string/new_contact"
+          android:id="@+id/menu_item_create_contact"
+        />
+    <item android:title="@string/show_favorites"
+          android:id="@+id/menu_item_toggle_favorites"
+        />
+</menu>
+```
+
+The menu is currently configured such that its menu items appear in the 
+overflow menu, accessed by pressing the three dots on the right side of the 
+toolbar.  Let's keep the toggle item in the overflow menu but move the 
+new contact item out of the overflow menu and use an icon only as well as text, 
+provided there's enough room on the screen.
+
+With the new contact menu item selected, click the button next to the **icon** 
+field.  Search for and select `ic_menu_add`.  Change the value of 
+**showAsAction** to include `ifRoom` and `withText``.  
+
+The XML for the menu resource file should now look like this:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:title="@string/new_contact"
+          android:id="@+id/@+id/menu_item_create_contact"
+          android:icon="@android:drawable/ic_menu_add"
+          app:showAsAction="ifRoom|withText"/>
+    <item android:title="@string/show_favorites"
+          android:id="@+id/@+id/menu_item_toggle_favorites"
+        />
+</menu>
+```
+
+Note that we have to use the *app:showAsAction* attribute rather than 
+the default *android:showAsAction* attribute due to legacy support issues 
+with the AppCompat library. 
+
+The design view should look like this:
+
+![menu](images/menu-design.png) 
+
+Now that we've designed the menu, let's add it to our app.  In Android, menus 
+are managed by callbacks from the *Activity* class.  When a menu is needed, 
+*Activity.onCreateOptionsMenu()* is called.  Our app, however, relies on 
+code to be implemented in fragments.  Fortunately, framgments also have 
+a *onCreateOptionsMenu()* that we can override.  The *FragmentManager* is 
+responsible for call the appropriate fragment's method when the hosting 
+activity's *onCreateOptionsMenu()* method is called.  To notify the 
+*FragmentManager* that this fragment can receive callbacks, we have to add 
+a call to `setHasOptionsMenu(true)` in the *AddressBookFragment.onCreate()* 
+method.  
+
+To add the menu to the address book, add the following code to the 
+*AddressBookFragment* class:
+
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.fragment_address_book, menu);
+    }
+    ...
+}
+```
+
+Here, we call *MenuInflater.inflate()* specifying the id of our menu resource 
+and the *Menu* instance that will be populated with our menu items.  We can 
+now run the app and we should be able to see the menu items.
+
+![more-menu](images/menu-running.png) 
+
+Now that we have the menu appearing in the app, we need to add code that will 
+perform some action when a user selects one of the menu items.  To do this,
+we have to override the *onOptionsItemSelected()* method in 
+*AddressBookFragment*.  When the method is called, a *MenuItem* is passed as a 
+parameter.  We can use *MenuItem.getItemId()* to get the ID of the item and 
+determine the appropriate action.  
+
+Before we handle the menu items, let's add a method to *AddressBook*:
+
+```java
+public class AddressBook {
+    ...
+    public List<Contact> getFavoriteContacts() {
+        List<Contact> favorites = new ArrayList<>();
+        for (Contact c: mContacts) {
+            if (c.isFavorite()) {
+                favorites.add(c);
+            }
+        }
+        return favorites;
+    }
+    ...
+}
+```
+
+This method will return a list of contacts marked as favorites.  Next, we can
+add the code necessary to toggle between showing all contacts and those that 
+are favorites:
+
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+    private boolean mShowFavoritesOnly = false;
+    ...
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_item_create_contact:
+                // we'll add this later
+                return true;
+            case R.id.menu_item_toggle_favorites:
+                mShowFavoritesOnly = !mShowFavoritesOnly;
+                if (mShowFavoritesOnly) {
+                    item.setTitle(R.string.show_all);
+                    mContactAdapter.mContacts =
+                            AddressBook.get().getFavoriteContacts();
+                }
+                else {
+                    item.setTitle(R.string.show_favorites);
+                    mContactAdapter.mContacts =
+                            AddressBook.get().getContacts();
+                }
+                mContactAdapter.notifyDataSetChanged();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+    ...
+}
+```
+
+First, we'll keep track of whether or not we're displaying only favorite 
+contacts or all contacts using a private field, *mShowFavoritesOnly*.  In the 
+*onOptionsItemSelected()* method, we'll determine what to do based on the 
+menu item's ID.  We'll add code to add a new contact shortly.  For now, we 
+can toggle between favorites and all contacts by first changing the value of 
+*mShowFavoritesOnly* then setting the menu item's title and the adapter's 
+list of contacts based on the value of *mShowFavoritesOnly*.  After we 
+change the adapter's list of contacts, we have to call 
+*Adapter.notifyDataSetChanged()*.  Finally, we return *true* to indicate no 
+further processing of the item is necessary.
+
+To support adding new contacts, let's first reduce the number of contacts 
+that are automatically generated - we'll keep some so they exist when we start 
+the app.  Recall that we create these initial contacts in the *AddressBook* 
+constructor.  While we're modifying *AddressBook*, let's also add a method to 
+add a contact to the list of contacts.  Here's what *AddressBook* should look 
+like:
+
+```java
+public class AddressBook {
+    ...
+    private AddressBook() {
+        mContacts = new ArrayList<>();
+        for (int i=0; i<5; i++) {
+            Contact contact = new Contact();
+            contact.setName("Person " + i);
+            contact.setEmail("Person" + i + "@email.com");
+
+            // set every 2nd as a favorite
+            if (i % 2 == 0) {
+                contact.setFavorite(true);
+            }
+
+            mContacts.add(contact);
+        }
+    }
+    ...
+    public void add(Contact contact) {
+        mContacts.add(contact);
+    }
+    ...
+}
+```
+
+Next, we can add code to handle the new contact menu item to 
+*AddressBookFragment*:
+
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_item_create_contact:
+                Contact contact = new Contact();
+                AddressBook.get().add(contact);
+                Intent intent = ContactPagerActivity.newIntent(
+                        getActivity(),contact.getID());
+                startActivity(intent);
+                return true;
+            case R.id.menu_item_toggle_favorites:
+                mShowFavoritesOnly = !mShowFavoritesOnly;
+                if (mShowFavoritesOnly) {
+                    item.setTitle(R.string.show_all);
+                    mContactAdapter.mContacts =
+                            AddressBook.get().getFavoriteContacts();
+                }
+                else {
+                    item.setTitle(R.string.show_favorites);
+                    mContactAdapter.mContacts =
+                            AddressBook.get().getContacts();
+                }
+                mContactAdapter.notifyDataSetChanged();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+    ...
+}
+```
+
+This new code creates a *Contact*, adds it to the *AddressBook*, and then 
+uses *ContactPagerActivity* to create an intent and display the contact's 
+details which we can edit.  We can now run the app, add contacts, and filter 
+the list to display only our favorites.
 
 ## Hierarchical Navigation
