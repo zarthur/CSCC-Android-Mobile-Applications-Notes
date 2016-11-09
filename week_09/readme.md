@@ -310,3 +310,43 @@ details which we can edit.  We can now run the app, add contacts, and filter
 the list to display only our favorites.
 
 ## Hierarchical Navigation
+So far, we've been able to use the back button to return to a previous screen 
+while using our app.  This type of navigation is called 
+**temporal navigation** - using the back button takes us back to the last place 
+we were.  An alternative to temporal navigation is **hierarchical navigation**. 
+Hierarchical navigation allows users to move up the app hierarchy - returning 
+to the parent activity at any time.  Hierarchical navigation is made available 
+to users through a up button that appears as a left-pointing arrow in the 
+toolbar.  In order to enable this functionality, we have to specify an 
+activity's parent in the app's manifest.  The following will allow users to 
+return to the AddressBookActivity from the ContactPagerActivity:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.arthurneuman.mycontacts">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <activity android:name=".ContactPagerActivity"
+            android:parentActivityName=".AddressBookActivity">
+        </activity>
+        <activity android:name=".AddressBookActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+``` 
+
+While this performs the same action as pushing the back button in our app, 
+in more complicated apps, this could be more useful.  In more complicated 
+apps, hierarchical navigation would allow to return to a screen that would 
+normally require multiple presses of the back button.
