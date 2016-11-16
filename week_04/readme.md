@@ -310,7 +310,7 @@ public View onCreateView(LayoutInflater inflater, ViewGroup container,
 
         @Override
         public void afterTextChanged(Editable s) {
-            // No new behvior
+            // No new behavior
         }
     });
     
@@ -370,7 +370,7 @@ public class ContactFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
-                // No new behvior
+                // No new behavior
             }
         });
 
@@ -390,7 +390,7 @@ public class ContactFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
-                // No new behvior
+                // No new behavior
             }
         });
 
