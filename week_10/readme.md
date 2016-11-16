@@ -114,4 +114,92 @@ should look similar to the following (but with your key):
 
 Now, we can add mapping functionality to our app.
 
+## Additional Contact Information
+Our goal will be to display a map indicating the location of an address we 
+assign to each of our contacts.  In order to assign an address, we'll need 
+to update the *Contact* class, *ContactFragment*, and the contact fragment 
+layout.  To keep the example simple, our app will store a free-form address 
+like `550 E. Spring St, Columbus, OH 43215`.  
+
+In the *Contact* class, we can add a new field and create the corresponding 
+getter and setter:
+
+```java
+public class Contact {
+    ...
+    private String mAddress;
+    ...
+    public String getAddress() {
+        return mAddress;
+    }
+
+    public void setAddress(String address) {
+        mAddress = address;
+    }
+}
+```
+
+Before we modify the layout, let's add a string resource to the `strings.xml` 
+resource file:
+
+```xml
+<string name="address_hint">Address</string>
+```
+
+To the layout, we can add another *EditText* widget with the following 
+properties:hint we specified, 
+
+| Property      | Value                |
+|---------------|----------------------|
+| ID            | contact_address      |
+| layout_width  | match_parent         |
+| layout_height | wrap_content         |
+| InputType     | textPostalAddress    |
+| hint          | @string/address_hint |
+| padding       | 20dp                 |
+
+The corresponding XML should look like this:
+
+```xml
+<EditText
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:inputType="textPostalAddress"
+    android:id="@+id/contact_address"
+    android:padding="20dp"
+    android:hint="@string/address_hint"/>
+```
+
+Recall that we used *TextWatcher* to update instances of *Contact* when users 
+typed values into the name and email fields.  We can do that same thing for the 
+address field.  
+
+```java
+public class ContactFragment extends Fragment {
+    ...
+    private EditText mAddressField;
+    ...
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        ...
+        mAddressField = (EditText)v.findViewById(R.id.contact_address);
+        mAddressField.setText(mContact.getAddress());
+        mAddressField.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start,
+                                          int count, int after) { }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                mContact.setAddress(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) { }
+        });
+        ...
+    }
+}
+``` 
 ## Using Maps 
