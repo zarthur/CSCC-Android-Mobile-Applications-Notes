@@ -361,4 +361,63 @@ the following:
 ![maps](images/maps.png)
 
 If you are running the code on a device and the map does not appear to be 
-correct, try rebooting the device. 
+correct, try rebooting the device.
+
+Finally, let's update the code to update the map if the text in the address 
+field changes.
+
+```java
+public class ContactFragment extends Fragment {
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        ...
+        mAddressField.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean b) {
+                if (!b) {
+                    updateMap();
+                }
+            }
+        });
+        mMapView = (MapView)v.findViewById(R.id.contact_map);
+        mMapView.onCreate(savedInstanceState);
+        updateMap();
+
+        return v;
+    }
+
+    private void updateMap() {
+        mMapView.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(GoogleMap googleMap) {
+                Geocoder geo = new Geocoder(getContext());
+                try {
+                    List<Address> addresses =
+                            geo.getFromLocationName(mAddressField.getText().toString(), 1);
+                    if (addresses.size() > 0) {
+                        LatLng latLng = new LatLng(addresses.get(0).getLatitude(),
+                                addresses.get(0).getLongitude());
+                        MarkerOptions marker = new MarkerOptions().position(latLng);
+                        googleMap.addMarker(marker);
+                        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+                    }
+                } catch (IOException e) {
+                }
+            }
+        });
+    }
+...
+}
+``` 
+
+Here, we've pulled the code to update the map into its own method, 
+*updateMap()*, and called this new method from the *onCreateView()* method.  
+We've also assigned an *OnFocusChangeListener* listener to the address field. 
+This method is called when the field is being used by the user or when the 
+user stops using it to begin using some other widget.  In the *onFocusChange()* 
+method, we check to see if the widget is losing focus and then update the map - 
+this allows the app to wait until the user has finished entering test before 
+attempting to update the map.  An alternative would be to update the map using 
+one of the *TextWatcher* methods but unless we controlled how often the map 
+could update, the app would attempt to update the map with every keystroke. 
