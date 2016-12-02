@@ -23,5 +23,5 @@ following the links below.
 - [Week 15 - Layout Flexibility and Assets](week_15/readme.md)
 
 ## Software Versions
-These notes make use of Android Studio 2.1, Android SDK Platform 23, and
+These notes make use of Android Studio 2.2, Android SDK Platform 25, and
 the Java 8 JDK (1.8).  These notes may not be accurate for other versions.
