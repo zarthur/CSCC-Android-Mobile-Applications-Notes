@@ -18,10 +18,8 @@ provided by it.
 First, let's add the AppCompat library as a dependency of our app.  In Android 
 Studio, select **File -> Project Structure...** from the menus.  With **app**
 selected, click the **Dependencies** tab.  Click the **+** button and 
-**Add Library dependency**.  Type `com.android.support:appcompat-v7:23.4.0` and 
-click **OK**.  Note that the version of the library might differ depending 
-on the version of the SDK you are compiling against.  Click **OK** to 
-close the **Project Structure** dialog.
+**Add Library dependency**. Seach for `com.android.support:appcompat-v7`.
+ Click **OK** to close the **Project Structure** dialog.
 
 Next, we need to make sure the app is using one of the AppCompat theme's.  Open 
 `app/manifests/AndroidManifest.xml` and note the value of the *android:theme* 
@@ -32,7 +30,7 @@ The file should contain something like this:
  <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
  ```
 
- If it doesn't change the parent attribute so it matches the value above.
+ If it doesn't, change the parent attribute so it matches the value above.
 
  Finally, we have to update all our activities to extend *AppCompatActivity*. 
  So far, all our activities have extended *FragmentActivity* or a subclass of 
@@ -105,11 +103,11 @@ The XML for the menu resource file should now look like this:
       xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:title="@string/new_contact"
-          android:id="@+id/@+id/menu_item_create_contact"
+          android:id="@+id/menu_item_create_contact"
           android:icon="@android:drawable/ic_menu_add"
           app:showAsAction="ifRoom|withText"/>
     <item android:title="@string/show_favorites"
-          android:id="@+id/@+id/menu_item_toggle_favorites"
+          android:id="@+id/menu_item_toggle_favorites"
         />
 </menu>
 ```
