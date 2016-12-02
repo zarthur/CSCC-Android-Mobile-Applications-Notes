@@ -281,9 +281,7 @@ After we call *onCreate()*, we have to get an instance of a *GoogleMap* object
 that will allow us to display and interact with a Google map.  To do this, we 
 use the widget's *getMapAsync()* method.  This method takes one parameter: an 
 object that implements the *OnMapReadyCallback* interface.  We can implement 
-the interface in *ContactFragment* by providing an implementation of the 
-*onMapReady()* method; this is where the code for mapping the address will 
-be written.  
+the interface using an anonymous class.  
 
 In order to display the address, we will need to convert it to a latitude and a 
 longitude.  To do this, we will rely on a *Geocoder*.  The *Geocoder* is able 
@@ -304,30 +302,27 @@ public class ContactFragment extends Fragment implements OnMapReadyCallback {
         ...
         mMapView = (MapView)v.findViewById(R.id.contact_map);
         mMapView.onCreate(savedInstanceState);
-        mMapView.getMapAsync(this);
+        mMapView.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(GoogleMap googleMap) {
+                Geocoder geo = new Geocoder(getContext());
+                try {
+                    List<Address> addresses =
+                            geo.getFromLocationName(mAddressField.getText().toString(), 1);
+                    if (addresses.size() > 0) {
+                        LatLng latLng = new LatLng(addresses.get(0).getLatitude(),
+                                addresses.get(0).getLongitude());
+                        MarkerOptions marker = new MarkerOptions().position(latLng);
+                        googleMap.addMarker(marker);
+                        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+                    }
+                } catch (IOException e) {
+                }
+            }
+        });
         ...
     }
-
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        if (mAddressField.length() > 0) {
-            Geocoder geo = new Geocoder(getContext());
-            try {
-                List<Address> addresses =
-                        geo.getFromLocationName(mAddressField.getText().toString(), 1);
-                if (addresses.size() > 0) {
-                    LatLng latLng = new LatLng(addresses.get(0).getLatitude(),
-                            addresses.get(0).getLongitude());
-                    MarkerOptions marker = new MarkerOptions().position(latLng);
-                    googleMap.addMarker(marker);
-                    googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
-                }
-            } catch (IOException e) {
-            }
-        }
-
-    }
-
+    ...
     @Override
     public void onResume() {
         super.onResume();
@@ -364,3 +359,6 @@ When we run the app and select a contact we should now see something similar to
 the following:
 
 ![maps](images/maps.png)
+
+If you are running the code on a device and the map does not appear to be 
+correct, try rebooting the device. 
