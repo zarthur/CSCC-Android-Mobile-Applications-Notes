@@ -9,8 +9,8 @@ functionality is not a a stand-alone component of Android.  This requires us to
 do several things before we can use maps in our app.  First, we need to add a 
 dependency to our app.  Just as we added the support and recyclerview libraries 
 to our app's dependencies, we'll have to add the Google Play Services.  When 
-adding the library dependency, search for `play-services` and select the 
-`com.google.android.gms:play-services` library.  If, after adding the 
+adding the library dependency, search for `play-services-maps` and select the 
+`com.google.android.gms:play-services-maps` library.  If, after adding the 
 dependency, Android Studio is unable to display layouts in the design view, try 
 rebuilding the project.
 
@@ -49,26 +49,7 @@ similar to the following:
 </manifest>
 ```    
 
-The last thing we'll need to use maps in our app is a Maps API key - a unique 
-identifier authorizing the app to use Google's mapping services.  First, we'll 
-need our app's signing key.  The easiest way to find the app's signing key 
-is using the command prompt or console.  In Windows, start the command prompt, 
-navigate to the directory of the project and run `gradlew.bat signingReport`. 
-In macOS or Linux, navigate to the directory of the project and run 
-`./gradlew signingReport`.  The output should include something similar to the 
-following:
-
-```
-Variant: debug
-Config: debug
-Store: /Users/arthur/.android/debug.keystore
-Alias: AndroidDebugKey
-MD5: XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX
-SHA1: XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX
-Valid until: Thursday, April 26, 2046
-```
-
-We'll need the `SHA1` value.  Next, open a browser and load 
+Next, open a browser and load 
 `https://developers.google.com/maps/documentation/android-api/signup`.  On the 
 page, click **GET A KEY**, **Select or create a project**, and 
 **Create a new project**.  
@@ -139,6 +120,30 @@ public class Contact {
 }
 ```
 
+Let's modify the *AddressBook* class to assing an address to all our contacts:
+
+```java
+public class AddressBook {
+    ...
+    private AddressBook() {
+        mContacts = new ArrayList<>();
+        for (int i=0; i<5; i++) {
+            Contact contact = new Contact();
+            contact.setName("Person " + i);
+            contact.setEmail("Person" + i + "@email.com");
+            contact.setAddress("550 E. Spring St, Columbus, OH 43215");
+            // set every 2nd as a favorite
+            if (i % 2 == 0) {
+                contact.setFavorite(true);
+            }
+
+            mContacts.add(contact);
+        }
+    }
+    ...
+}
+```
+
 Before we modify the layout, let's add a string resource to the `strings.xml` 
 resource file:
 
@@ -146,8 +151,8 @@ resource file:
 <string name="address_hint">Address</string>
 ```
 
-To the layout, we can add another *EditText* widget with the following 
-properties:hint we specified, 
+To the layout, `fragment_contact.xml` we can add another *EditText* widget with 
+the following properties: 
 
 | Property      | Value                |
 |---------------|----------------------|
@@ -202,4 +207,160 @@ public class ContactFragment extends Fragment {
     }
 }
 ``` 
+
 ## Using Maps 
+As a next step, let's add a *MapView* to our `fragment_contact.xml` layout; 
+drag and drop a *MapView* from the design palette to an area below the favorite 
+checkbox. Set the *MapView*'s **id** to `contact_map`.  The layout's XML should 
+look similar to the following:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/contact_name"
+        android:hint="@string/name_hint"
+        android:padding="20dp"
+        android:inputType="textPersonName"/>
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/contact_email"
+        android:hint="@string/email_hint"
+        android:padding="20dp"
+        android:inputType="textEmailAddress"/>
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPostalAddress"
+        android:id="@+id/contact_address"
+        android:padding="20dp"
+        android:hint="@string/address_hint"/>
+
+    <CheckBox
+        android:text="@string/favorite"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/contact_favorite"/>
+
+    <com.google.android.gms.maps.MapView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/contact_map" />
+
+</LinearLayout>
+```
+
+Next, we can begin to work with our map by modifying the *ContactFragment* 
+class. Before we add any code, it's important that we understand how maps work.
+We can access the *MapView* widget in the same we we access the other widgets 
+using *View.findViewById()*.  Once we have access to the widget, we have to 
+forward all lifecycle calls from our fragment to the widget; this includes 
+calls to the following:
+
+- *onCreate()*
+- *onResume()*
+- *onPause()*
+- *onDestroy()*
+- *onSaveInstanceState()*
+- *onLowMemory()*
+
+We can override the *ContactFragment*'s methods to call the corresponding 
+widget's methods; we won't have access to the widget until *onCreateView()* is 
+called in *ContactFragment* so we can call the widget's *onCreate()* method 
+there.
+
+After we call *onCreate()*, we have to get an instance of a *GoogleMap* object 
+that will allow us to display and interact with a Google map.  To do this, we 
+use the widget's *getMapAsync()* method.  This method takes one parameter: an 
+object that implements the *OnMapReadyCallback* interface.  We can implement 
+the interface in *ContactFragment* by providing an implementation of the 
+*onMapReady()* method; this is where the code for mapping the address will 
+be written.  
+
+In order to display the address, we will need to convert it to a latitude and a 
+longitude.  To do this, we will rely on a *Geocoder*.  The *Geocoder* is able 
+to find latitude and longitude from a given address and return a list of 
+results.  We can use the first result to create a map marker and reposition the 
+map to the latitude and longitude.  
+
+With these changes, *ContactFragment* should include the following:
+
+```java
+public class ContactFragment extends Fragment implements OnMapReadyCallback {
+    ...
+    private MapView mMapView;
+    ...
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        ...
+        mMapView = (MapView)v.findViewById(R.id.contact_map);
+        mMapView.onCreate(savedInstanceState);
+        mMapView.getMapAsync(this);
+        ...
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        if (mAddressField.length() > 0) {
+            Geocoder geo = new Geocoder(getContext());
+            try {
+                List<Address> addresses =
+                        geo.getFromLocationName(mAddressField.getText().toString(), 1);
+                if (addresses.size() > 0) {
+                    LatLng latLng = new LatLng(addresses.get(0).getLatitude(),
+                            addresses.get(0).getLongitude());
+                    MarkerOptions marker = new MarkerOptions().position(latLng);
+                    googleMap.addMarker(marker);
+                    googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+                }
+            } catch (IOException e) {
+            }
+        }
+
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mMapView.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mMapView.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mMapView.onDestroy();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mMapView.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mMapView.onLowMemory();
+    }
+}
+```
+
+When we run the app and select a contact we should now see something similar to 
+the following:
+
+![maps](images/maps.png)
