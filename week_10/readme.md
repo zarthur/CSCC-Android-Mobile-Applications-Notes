@@ -420,4 +420,173 @@ method, we check to see if the widget is losing focus and then update the map -
 this allows the app to wait until the user has finished entering test before 
 attempting to update the map.  An alternative would be to update the map using 
 one of the *TextWatcher* methods but unless we controlled how often the map 
-could update, the app would attempt to update the map with every keystroke. 
+could update, the app would attempt to update the map with every keystroke.
+
+For clarity, all the code in the *ContactFragment* class is presented below.
+
+```java
+public class ContactFragment extends Fragment {
+    private Contact mContact;
+    private EditText mNameField;
+    private EditText mEmailField;
+    private CheckBox mFavoriteCheckBox;
+    private EditText mAddressField;
+    private MapView mMapView;
+
+    private static final String ARG_CONTACT_ID = "contact_id";
+
+    public static ContactFragment newInstance(UUID contactID) {
+        ContactFragment contactFragment = new ContactFragment();
+        Bundle args = new Bundle();
+        args.putSerializable(ARG_CONTACT_ID, contactID);
+        contactFragment.setArguments(args);
+        return contactFragment;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        UUID contactID = (UUID) getArguments().getSerializable(ARG_CONTACT_ID);
+        mContact = AddressBook.get().getContact(contactID);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_contact, container, false);
+
+        mNameField = (EditText)v.findViewById(R.id.contact_name);
+        mNameField.setText(mContact.getName());
+        mNameField.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count,
+                                          int after) {
+                // No new behavior
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before,
+                                      int count) {
+                mContact.setName(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // No new behavior
+            }
+        });
+
+        mEmailField = (EditText)v.findViewById(R.id.contact_email);
+        mEmailField.setText(mContact.getEmail());
+        mEmailField.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count,
+                                          int after) {
+                // No new behavior
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before,
+                                      int count) {
+                mContact.setEmail(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // No new behavior
+            }
+        });
+
+        mFavoriteCheckBox = (CheckBox)v.findViewById(R.id.contact_favorite);
+        mFavoriteCheckBox.setChecked(mContact.isFavorite());
+        mFavoriteCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mContact.setFavorite(isChecked);
+            }
+        });
+
+        mAddressField = (EditText)v.findViewById(R.id.contact_address);
+        mAddressField.setText(mContact.getAddress());
+        mAddressField.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start,
+                                          int count, int after) { }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                mContact.setAddress(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+        mAddressField.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean b) {
+                if (!b) {
+                    updateMap();
+                }
+            }
+        });
+        mMapView = (MapView)v.findViewById(R.id.contact_map);
+        mMapView.onCreate(savedInstanceState);
+        updateMap();
+
+        return v;
+    }
+
+    private void updateMap() {
+        mMapView.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(GoogleMap googleMap) {
+                Geocoder geo = new Geocoder(getContext());
+                try {
+                    List<Address> addresses =
+                            geo.getFromLocationName(mAddressField.getText().toString(), 1);
+                    if (addresses.size() > 0) {
+                        LatLng latLng = new LatLng(addresses.get(0).getLatitude(),
+                                addresses.get(0).getLongitude());
+                        MarkerOptions marker = new MarkerOptions().position(latLng);
+                        googleMap.addMarker(marker);
+                        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+                    }
+                } catch (IOException e) {
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mMapView.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mMapView.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mMapView.onDestroy();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mMapView.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mMapView.onLowMemory();
+    }
+}
+``` 
