@@ -178,7 +178,135 @@ to demonstrate the functionality of the send email menu item when using the
 emulator, configure the email app before selecting the send email menu item.
 
 ## Getting Data Back
+What if we wanted to add a picture for each contact?  We can use an implicit 
+intent to start the camera app to take a picture but how do we get the result 
+into our app? When the activity that we call is done executing and returns 
+data, Android will call the *onActivityResult()* method of the original 
+activity with an intent containing the result.  
 
+If our app requires a camera, we should specify that requirement in the app's 
+manifest:
 
+```xml
+<manifest ... >
+    <uses-feature android:name="android.hardware.camera"
+                  android:required="true" />
+    ...
+</manifest>
+```
 
+Now, when we add our app to Google Play, it will only be availbe for devices 
+with cameras.
+
+To accomidate an image, we'll have to modify our model and view.  First,
+let's add a private field to the *Contact* class:
+
+```java
+public class Contact {
+    
+    ...
+    
+    private Bitmap mImage;
+
+    ...
+
+    public Bitmap getImage() {
+        return mImage;
+    }
+
+    public void setImage(Bitmap mImage) {
+        this.mImage = mImage;
+    }
+}
+```
+
+Next, add an *ImageView* widget to the `fragment_contact.xml` layout resource. 
+When you add it, you'll be prompted to choose an image - pick any image to use 
+as the default image. Set the id to `contact_image`, layout witdth and 
+height to wrap content, padding to 20dp. The layout file should now include 
+something like the following:
+
+```xml
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="20dp"
+        app:srcCompat="@mipmap/ic_launcher"
+        android:id="@+id/contact_image" />
+```
+
+Now, we can add code to the *ContactFragment* class that will allow us to set 
+an image for a contact.
+
+```java
+public class ContactFragment extends Fragment {
+    ...
+    private ImageView mImageView;
+
+    ...
+
+    private static final int REQUEST_IMAGE_CAPTURE = 1;
+
+    ...
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        
+        ...
+
+        mImageView = (ImageView)v.findViewById(R.id.contact_image);
+        if (mContact.getImage() != null) {
+            mImageView.setImageBitmap(mContact.getImage());
+        }
+        mImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                if (intent.resolveActivity(getContext().getPackageManager()) != null) {
+                    startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
+                }
+            }
+        });
+
+        ...
+
+    }
+
+    ...
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            Bundle extras = data.getExtras();
+            Bitmap imageBitmap = (Bitmap) extras.get("data");
+            mContact.setImage(imageBitmap);
+            mImageView.setImageBitmap(imageBitmap);
+        }
+    }
+}
+```
+
+We start by adding a field for the *ImageView*.  In the fragment's 
+*onCreateView()* method, we assign the *ImageView* to the field and then set 
+its image if the associated contact has an image. We will require a user to tap 
+on the *ImageView* widget to update the contact's image, so we assign an 
+*OnClickListener*.  In *onClick()* method the new listener, 
+we create a new intent using the *MediaStore.ACTION_IMAGE_CAPTURE* action.  
+When we start the activity, using the *startActivityForResult()* method, we 
+must specify both the intent and the request code; the request code will be 
+later to process the result returned by the new activity.  Since the OS will 
+rely on the *onActivityResult()* method when the new activity is complete 
+(regardless of the activity), using a request code allows us process results 
+returned by different activities in different ways.  
+
+We must specifiy what is to be done after the user captures an image with the 
+camera.  In the *onActivityResult()* method, we first check if the request code 
+corresponds to the image capture activity and that the result code indicates 
+success.  If these conditions are met, we extract the thumbnail of the image 
+from the intent extra with key "data" and use the object to update 
+contact and the *ImageView* widget.
+
+Note that we have not added any code to persist our data - any data we add, 
+including contact pictures, will be lost if our app is closed.
                 
