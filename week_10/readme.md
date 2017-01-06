@@ -120,7 +120,7 @@ public class Contact {
 }
 ```
 
-Let's modify the *AddressBook* class to assing an address to all our contacts:
+Let's modify the *AddressBook* class to assign an address to all our contacts:
 
 ```java
 public class AddressBook {

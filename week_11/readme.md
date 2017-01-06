@@ -21,7 +21,7 @@ In our contacts app, we'll use implicit intents to allow us to send an email
 a contact.  Before we add the intent-specific code, let's update the view.
 
 To start, let's add a string resource for a "Send Email" menu item and for a 
-message we'll display if there is a problem starting an email appto the 
+message we'll display if there is a problem starting an email app to the 
 `strings.xml` resource file: 
 
 ```xml
@@ -45,7 +45,7 @@ id.  The file should contain the following:
 ```
 
 Next, we can add code to provide functionality to the new menu item.  To do 
-this, we'll need to create an implicit intent.  Like explict intents we created 
+this, we'll need to create an implicit intent.  Like explicit intents we created 
 previously, we'll use the *Intent* class to do this.  For each intent, the 
 primary information we have to provide are the intent's action and the data 
 to operate on.  When we used an explicit intent previously, we added code 
@@ -58,14 +58,14 @@ similar to the following:
 
 Here, the action is `getActivity()` and the data to be operated on is the 
 *ContactActivity* class; this explicitly starts an activity.  With implicit 
-intents, we'll desribe the action we want to perform, typically with constants 
+intents, we'll describe the action we want to perform, typically with constants 
 from the *Intent* class.  For example, we can use *Intent.ACTION_IMAGE_CAPTURE* 
 if we wanted to use the camera or *Intent.ACTION_SEND* if we wanted to send 
 the specified data.  To send an email to a specific address without any 
 attachments, we'll use the *Intent.ACTION_SENDTO* action.  
 
 There are additional pieces of information that we can provide with an intent. 
-One of these is bundle extras that can be used provide addtional information 
+One of these is bundle extras that can be used provide additional information 
 to the target activity.  One example of using extras is to specify the 
 destination email address when sending email.
 
@@ -82,7 +82,7 @@ app's manifest:
 ```
 
 By specifying the action, the OS knows the app is capable of handling the 
-action.  To respond to implict intents, we would have to specify the default 
+action.  To respond to implicit intents, we would have to specify the default 
 category.  When looking for volunteer applications to perform some action, 
 Android uses the default category.  We can also specify the scheme that can 
 be compared with the intent data to ensure our app is cable of handling the 
@@ -149,7 +149,7 @@ public class ContactFragment extends Fragment {
 The code we've added to the *onCreate()* and *onCreateOptionsMenu()* methods 
 are similar to the code we added to *AddressBookFragement* when we added a menu 
 previously.  Similarly, we have to add code to the *onOptionsItemSelected()* 
-method to support seclection of menu items.
+method to support selection of menu items.
 
 First, we check if the contact has an email address; if 
 not, the method returns true and does nothing.  Next we create an intent with 
@@ -195,10 +195,10 @@ manifest:
 </manifest>
 ```
 
-Now, when we add our app to Google Play, it will only be availbe for devices 
+Now, when we add our app to Google Play, it will only be available for devices 
 with cameras.
 
-To accomidate an image, we'll have to modify our model and view.  First,
+To accommodate an image, we'll have to modify our model and view.  First,
 let's add a private field to the *Contact* class:
 
 ```java
@@ -222,7 +222,7 @@ public class Contact {
 
 Next, add an *ImageView* widget to the `fragment_contact.xml` layout resource. 
 When you add it, you'll be prompted to choose an image - pick any image to use 
-as the default image. Set the id to `contact_image`, layout witdth and 
+as the default image. Set the id to `contact_image`, layout width and 
 height to wrap content, padding to 20dp. The layout file should now include 
 something like the following:
 
@@ -298,9 +298,9 @@ must specify both the intent and the request code; the request code will be
 later to process the result returned by the new activity.  Since the OS will 
 rely on the *onActivityResult()* method when the new activity is complete 
 (regardless of the activity), using a request code allows us process results 
-returned by different activities in different ways.  
+returned by different activities in different ways.
 
-We must specifiy what is to be done after the user captures an image with the 
+We must specify what is to be done after the user captures an image with the 
 camera.  In the *onActivityResult()* method, we first check if the request code 
 corresponds to the image capture activity and that the result code indicates 
 success.  If these conditions are met, we extract the thumbnail of the image 

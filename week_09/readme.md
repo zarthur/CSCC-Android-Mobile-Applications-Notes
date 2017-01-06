@@ -18,7 +18,7 @@ provided by it.
 First, let's add the AppCompat library as a dependency of our app.  In Android 
 Studio, select **File -> Project Structure...** from the menus.  With **app**
 selected, click the **Dependencies** tab.  Click the **+** button and 
-**Add Library dependency**. Seach for `com.android.support:appcompat-v7`.
+**Add Library dependency**. Search for `com.android.support:appcompat-v7`.
  Click **OK** to close the **Project Structure** dialog.
 
 Next, we need to make sure the app is using one of the AppCompat theme's.  Open 
