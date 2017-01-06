@@ -17,8 +17,8 @@ following the links below.
 - [Week 9 - The Toolbar, Menus, and Navigation](week_09/readme.md)
 - [Week 10 - Maps and Custom Views](week_10/readme.md)
 - [Week 11 - Intents](week_11/readme.md)
-- [Week 12 - Consuming RESTful Services](week_12/readme.md)
-- [Week 13 - Data Persistence](week_13/readme.md)
+- [Week 12 - Data Persistence](week_12/readme.md)
+- [Week 13 - Consuming RESTful Services](week_13/readme.md)
 - [Week 14 - App Distribution](week_14/readme.md)
 - [Week 15 - Layout Flexibility and Assets](week_15/readme.md)
 

@@ -1,4 +1,4 @@
-# Week 12 - Consuming RESTful Services
+# Week 12 - Data Persistence
 
 ## Corresponding Text
-*Android Programming*, pp. 405-428
+*Android Programming*, pp. 257-271
