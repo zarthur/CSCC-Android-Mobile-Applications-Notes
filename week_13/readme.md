@@ -176,3 +176,199 @@ The menu XML should look like this:
           android:id="@+id/menu_item_sync_settings"/>
 </menu>
 ```
+
+##Connecting to the Internet
+Now that we've provided that user with a way of specifying the URL of the 
+remote server and a username and password to use to connect to that server, 
+we're ready to add code.  
+
+Before we add the code to our app, we'll need to add the Gson library as a 
+dependency. Add the following to the app's build.gradle file:
+
+```
+compile 'com.google.code.gson:gson:2.8.0'
+```
+
+First, let's create a new package named `network` to store our code 
+responsible for connecting to a remote server and processing the request and 
+response data.  
+
+Next, create an *HttpRequests* class; this will store the code used to make 
+GET and POST HTTP request.  The code for the class is as follows:
+
+```java
+public class HttpRequest {
+    // set username and password for basic auth with HttpURLConnection
+    private static void setAuth(final String username, final String password) {
+        Authenticator.setDefault(new Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(username, password.toCharArray());
+            }
+        });
+    }
+
+    // process the response from an HttpURLConnection and return a string
+    private static String processResponse(HttpURLConnection connection) throws IOException {
+        try {
+            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                throw new IOException(connection.getResponseMessage() + ", url: "
+                        + connection.getURL());
+            }
+
+            InputStreamReader inputStreamReader
+                    = new InputStreamReader(connection.getInputStream());
+            BufferedReader input = new BufferedReader(inputStreamReader);
+            String response = "";
+            String line;
+            while ((line = input.readLine()) != null) {
+                response += line;
+            }
+
+            return response;
+        }
+        finally {
+            connection.disconnect();
+        }
+    }
+
+    // http get
+    public static String get(URL url, String username, String password) throws IOException{
+        setAuth(username, password);
+        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+        return processResponse(connection);
+    }
+
+    // http post
+    public static String post(URL url, String username, String password,
+                              String contentType, String content) throws IOException{
+        setAuth(username, password);
+        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+        connection.setDoOutput(true);
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty("Content-Type", contentType);
+
+        OutputStream os = connection.getOutputStream();
+        os.write(content.getBytes());
+        os.flush();
+
+        return processResponse(connection);
+    }
+}
+```
+
+Note that we did not use the Apache HttpClient library.  While it was 
+previously included with Android, it has been deprecated in favor of the Java 
+standard library.
+
+Next, we'll create another class, *APIWrapper*, that will be responsible for 
+sending contact data to the remote server and processing the data returned:
+
+```java
+public class APIWrapper {
+    private String baseURL;
+    private String username;
+    private String password;
+    private Gson gson = new Gson();
+
+    private final static String LIST_CONTACTS_URL = "/contacts/api/v1.0/contacts";
+    private final static String NEW_CONTACT_URL = "/contacts/api/v1.0/contact/create";
+
+    public APIWrapper(String baseURL, String username, String password) {
+        this.baseURL = baseURL;
+        this.username = username;
+        this.password = password;
+    }
+
+    public List<Contact> getContacts() throws IOException {
+        URL url = new URL(baseURL + LIST_CONTACTS_URL);
+        String serverData = HttpRequest.get(url, username, password);
+        Type contactListType = new TypeToken<ArrayList<Contact>>(){}.getType();
+        List<Contact> contacts = gson.fromJson(serverData, contactListType);
+        return contacts;
+    }
+
+    public void createContact(Contact contact) throws IOException {
+        URL url = new URL(baseURL + NEW_CONTACT_URL);
+        String jsonData = gson.toJson(contact);
+        HttpRequest.post(url, username, password, "application/json", jsonData);
+    }
+}
+```
+
+We'll create one more class in the root package that will handle the logic 
+of synchronizing the database with the remote server.
+
+```java
+public class SyncData {
+    // sync data - for simplicity this will only add new contacts but will not update existing
+    // contacts
+    public static void synchronize (Context context) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+        String baseURL = sharedPref.getString("pref_key_sync_server", "");
+        String username = sharedPref.getString("pref_key_sync_username", "");
+        String password = sharedPref.getString("pref_key_sync_password", "");
+        if (baseURL.equals("") || username.equals("") || password.equals("")) {
+            return;
+        }
+
+        APIWrapper apiWrapper = new APIWrapper(baseURL, username, password);
+        AddressBook addressBook = AddressBook.get(context);
+        List<Contact> localContacts = addressBook.getContacts();
+
+        try {
+            List<Contact> remoteContacts = apiWrapper.getContacts();
+
+            List<UUID> localUUIDs = new ArrayList<>();
+            List<UUID> remoteUUIDs = new ArrayList<>();
+
+            for (Contact c: localContacts) {
+                localUUIDs.add(c.getID());
+            }
+
+            for (Contact c: remoteContacts) {
+                remoteUUIDs.add(c.getID());
+            }
+
+            // update remote server
+            for (Contact c: localContacts) {
+                if (!remoteUUIDs.contains(c.getID())) {
+                    apiWrapper.createContact(c);
+                }
+            }
+
+            // update local
+            for (Contact c: remoteContacts) {
+                if (!localUUIDs.contains(c.getID())) {
+                    addressBook.add(c);
+                }
+            }
+        } catch (IOException e) {
+            Log.e(SyncData.class.toString(),
+                    "Unable to sync contact data with remote server." + e.getMessage());
+        }
+
+    }
+}
+```
+
+Here, we first gain access to shared preferences using the *PreferenceManager*. 
+Once we have the shared preferences, we retrieve the remote server URL, 
+username, and password.  Using this data, we create an an instance of 
+*APIWrapper* and use it to get a list of contacts from the remote server. 
+Similarly, we get a list of local contacts from *AddressBook*.  For each list 
+of contacts, we collect the UUIDs.  
+
+Next, we iterate through the list of local contacts and check to see if the 
+local contact's UUID is in the list of server contact UUIDs; if not, we add the 
+contact to the server.  In the same way, we then iterate through the remote 
+contacts and compare their UUIDs with the local UUIDs, updating the 
+*AddressBook* as needed.  
+
+For simplicity, this code only syncs new contacts.  If we were to support 
+updating contacts, we could compare names, email addresses, address, and 
+favorite status to determine if the contacts differed.  The problem with this 
+approach, however, is that we would not know what the updated contact is - the 
+local contact or the remote contact.  One way to handle this is to track a 
+"last updated" date and time; we could then compare the datetime between the 
+remote and local contact to determine which is newer and which needs to be 
+updated.
