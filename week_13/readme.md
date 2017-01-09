@@ -177,7 +177,7 @@ The menu XML should look like this:
 </menu>
 ```
 
-##Connecting to the Internet
+##Syncing Data
 Now that we've provided that user with a way of specifying the URL of the 
 remote server and a username and password to use to connect to that server, 
 we're ready to add code.  
