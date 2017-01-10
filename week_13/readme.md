@@ -199,7 +199,7 @@ GET and POST HTTP request.  The code for the class is as follows:
 ```java
 public class HttpRequest {
     // set username and password for basic auth with HttpURLConnection
-    private static void setAuth(final String username, final String password) {
+    public HttpRequest(final String username, final String password) {
         Authenticator.setDefault(new Authenticator() {
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(username, password.toCharArray());
@@ -208,7 +208,7 @@ public class HttpRequest {
     }
 
     // process the response from an HttpURLConnection and return a string
-    private static String processResponse(HttpURLConnection connection) throws IOException {
+    private String processResponse(HttpURLConnection connection) throws IOException {
         try {
             if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                 throw new IOException(connection.getResponseMessage() + ", url: "
@@ -223,7 +223,6 @@ public class HttpRequest {
             while ((line = input.readLine()) != null) {
                 response += line;
             }
-
             return response;
         }
         finally {
@@ -232,16 +231,13 @@ public class HttpRequest {
     }
 
     // http get
-    public static String get(URL url, String username, String password) throws IOException{
-        setAuth(username, password);
+    public String get(URL url) throws IOException{
         HttpURLConnection connection = (HttpURLConnection)url.openConnection();
         return processResponse(connection);
     }
 
     // http post
-    public static String post(URL url, String username, String password,
-                              String contentType, String content) throws IOException{
-        setAuth(username, password);
+    public String post(URL url, String contentType, String content) throws IOException{
         HttpURLConnection connection = (HttpURLConnection)url.openConnection();
         connection.setDoOutput(true);
         connection.setRequestMethod("POST");
@@ -261,92 +257,155 @@ previously included with Android, it has been deprecated in favor of the Java
 standard library.
 
 Next, we'll create another class, *APIWrapper*, that will be responsible for 
-sending contact data to the remote server and processing the data returned:
+sending contact data to the remote server and processing the data returned. The 
+file containting *APIWrapper* will also contain some helper classes that we'll 
+need for serializing and deserializing the data.
 
 ```java
 public class APIWrapper {
     private String baseURL;
-    private String username;
-    private String password;
-    private Gson gson = new Gson();
+    private HttpRequest mHttpRequest;
+    private Gson gson;
 
     private final static String LIST_CONTACTS_URL = "/contacts/api/v1.0/contacts";
     private final static String NEW_CONTACT_URL = "/contacts/api/v1.0/contact/create";
+    private final static String LOGTAG = APIWrapper.class.getSimpleName();
 
     public APIWrapper(String baseURL, String username, String password) {
         this.baseURL = baseURL;
-        this.username = username;
-        this.password = password;
+        mHttpRequest = new HttpRequest(username, password);
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(Contact.class, new ContactSerializer());
+        builder.registerTypeAdapter(Contact.class, new ContactDeserializer());
+        gson = builder.create();
     }
 
-    public List<Contact> getContacts() throws IOException {
-        URL url = new URL(baseURL + LIST_CONTACTS_URL);
-        String serverData = HttpRequest.get(url, username, password);
-        Type contactListType = new TypeToken<ArrayList<Contact>>(){}.getType();
-        List<Contact> contacts = gson.fromJson(serverData, contactListType);
-        return contacts;
+    public List<Contact> getContacts() {
+        try {
+            URL url = new URL(baseURL + LIST_CONTACTS_URL);
+            String serverData = mHttpRequest.get(url);
+            ContactContainer contactContainer = gson.fromJson(serverData, ContactContainer.class);
+            return contactContainer.contacts;
+        }
+        catch (IOException e) {
+            Log.e(LOGTAG, "Unable to get contacts. " + e.getMessage());
+        }
+        return null;
     }
 
-    public void createContact(Contact contact) throws IOException {
-        URL url = new URL(baseURL + NEW_CONTACT_URL);
-        String jsonData = gson.toJson(contact);
-        HttpRequest.post(url, username, password, "application/json", jsonData);
+    public void createContact(Contact contact) {
+        try {
+            URL url = new URL(baseURL + NEW_CONTACT_URL);
+            String jsonData = gson.toJson(contact);
+            Log.d("create contact", url + ": " + jsonData);
+            mHttpRequest.post(url, "application/json", jsonData);
+        }
+        catch (IOException e) {
+            Log.e(LOGTAG, "Unable to create contact. " + e.getMessage());
+        }
+
+    }
+}
+
+
+class ContactContainer {
+    public List<Contact> contacts;
+}
+
+class ContactSerializer implements JsonSerializer<Contact> {
+    @Override
+    public JsonElement serialize(Contact src, Type typeOfSrc, JsonSerializationContext context) {
+        JsonObject object = new JsonObject();
+        object.addProperty("name", src.getName());
+        object.addProperty("email", src.getEmail());
+        object.addProperty("address", src.getAddress());
+        object.addProperty("uuid", src.getID().toString());
+        object.addProperty("favorite", src.isFavorite());
+        return object;
+    }
+}
+
+class ContactDeserializer implements JsonDeserializer<Contact> {
+    @Override
+    public Contact deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        JsonObject object = (JsonObject) json;
+        Contact contact = new Contact(UUID.fromString(object.get("uuid").getAsString()));
+        contact.setName(object.get("name").getAsString());
+        contact.setEmail(object.get("email").getAsString());
+        contact.setAddress(object.get("address").getAsString());
+        return contact;
     }
 }
 ```
 
 We'll create one more class in the root package that will handle the logic 
-of synchronizing the database with the remote server.
+of synchronizing the database with the remote server.  This new class will 
+extend the *AsyncTask* class - this will allow the code to execute in a 
+background thread that won't interfere with the main thread while it executes. 
+*AsyncTask* is a generic class that supports three generic type parameters used 
+to specify the type of parameters supplied when the task is executed, the type 
+of data published during execution to indicate progress, and the type of the 
+result; we won't use any of those.  
+
 
 ```java
-public class SyncData {
+public class SyncData extends AsyncTask<Void, Void, Void> {
+    private Context mContext;
+
+    private final static String LOGTAG = SyncData.class.getSimpleName();
+
+    public SyncData(Context context) {
+        mContext = context;
+    }
+
     // sync data - for simplicity this will only add new contacts but will not update existing
     // contacts
-    public static void synchronize (Context context) {
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+    @Override
+    protected Void doInBackground(Void... voids) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
         String baseURL = sharedPref.getString("pref_key_sync_server", "");
         String username = sharedPref.getString("pref_key_sync_username", "");
         String password = sharedPref.getString("pref_key_sync_password", "");
         if (baseURL.equals("") || username.equals("") || password.equals("")) {
-            return;
+            return null;
         }
 
         APIWrapper apiWrapper = new APIWrapper(baseURL, username, password);
-        AddressBook addressBook = AddressBook.get(context);
+        AddressBook addressBook = AddressBook.get(mContext);
         List<Contact> localContacts = addressBook.getContacts();
 
-        try {
-            List<Contact> remoteContacts = apiWrapper.getContacts();
-
-            List<UUID> localUUIDs = new ArrayList<>();
-            List<UUID> remoteUUIDs = new ArrayList<>();
-
-            for (Contact c: localContacts) {
-                localUUIDs.add(c.getID());
-            }
-
-            for (Contact c: remoteContacts) {
-                remoteUUIDs.add(c.getID());
-            }
-
-            // update remote server
-            for (Contact c: localContacts) {
-                if (!remoteUUIDs.contains(c.getID())) {
-                    apiWrapper.createContact(c);
-                }
-            }
-
-            // update local
-            for (Contact c: remoteContacts) {
-                if (!localUUIDs.contains(c.getID())) {
-                    addressBook.add(c);
-                }
-            }
-        } catch (IOException e) {
-            Log.e(SyncData.class.toString(),
-                    "Unable to sync contact data with remote server." + e.getMessage());
+        List<Contact> remoteContacts = apiWrapper.getContacts();
+        // if server returns an invalid response, remoteContacts will be null
+        if (remoteContacts == null) {
+            return null;
         }
 
+
+        List<UUID> localUUIDs = new ArrayList<>();
+        List<UUID> remoteUUIDs = new ArrayList<>();
+
+        for (Contact c: localContacts) {
+            localUUIDs.add(c.getID());
+        }
+
+        for (Contact c: remoteContacts) {
+            remoteUUIDs.add(c.getID());
+        }
+
+        // update remote server
+        for (Contact c: localContacts) {
+            if (!remoteUUIDs.contains(c.getID())) {
+                apiWrapper.createContact(c);
+            }
+        }
+
+        // update local
+        for (Contact c: remoteContacts) {
+            if (!localUUIDs.contains(c.getID())) {
+                addressBook.add(c);
+            }
+        }
+        return null;
     }
 }
 ```
@@ -372,3 +431,33 @@ local contact or the remote contact.  One way to handle this is to track a
 "last updated" date and time; we could then compare the datetime between the 
 remote and local contact to determine which is newer and which needs to be 
 updated.
+
+The final step is to add code to execute synchronization.  In the 
+*AddressBookFragment*, we'll add this code to the *onCreateView()* and 
+*onStop()* methods - this will ensure that the data is synchronized when 
+the app starts and when the user navigates away from the app. 
+
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        ...
+        new SyncData(getContext()).execute();
+        updateUI();
+        ...
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        new SyncData(getContext()).execute();
+    }
+
+    ...
+}
+```
+
+We could also optionally add a menu item to allow the user to manually start 
+the sync process.
