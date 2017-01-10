@@ -15,8 +15,6 @@ the ID associated with the string array resource.  Our code for the *Question*
 class looks like this:
 
 ```java
-package com.arthurneuman.triviaquiz;
-
 public class Question {
     private int mQuestionResId;
     private int mCorrectAnswer;
@@ -245,15 +243,6 @@ field to keep track of the index of the current question.  At this point,
 `QuizActivity.java` should look like this:
 
 ```java
-package com.arthurneuman.triviaquiz;
-
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
-
 public class QuizActivity extends AppCompatActivity {
     private Button mOption1Button;
     private Button mOption2Button;
@@ -373,15 +362,6 @@ With updated listeners and a listener for the next button, our code should look
 like this:
 
 ```java
-package com.arthurneuman.triviaquiz;
-
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
-
 public class QuizActivity extends AppCompatActivity {
     private Button mOption1Button;
     private Button mOption2Button;
@@ -552,16 +532,6 @@ after the call to *super()*.
 The code in `QuizActivity.java` should now look similar to the following:
 
 ```java
-package com.arthurneuman.triviaquiz;
-
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
-
 public class QuizActivity extends AppCompatActivity {
     private static final String TAG = QuizActivity.class.getSimpleName();
 
@@ -790,16 +760,6 @@ device, we should now still see the second question.
 The complete code for `QuizActivity.java` appears below.
 
 ```java
-package com.arthurneuman.triviaquiz;
-
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
-
 public class QuizActivity extends AppCompatActivity {
     private static final String TAG = QuizActivity.class.getSimpleName();
     private static final String KEY_INDEX = "index";

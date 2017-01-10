@@ -245,11 +245,6 @@ already exists.
 In the `QuizActivity.java` file, you should see code similar to the following:
 
 ```java
-package com.arthurneuman.triviaquiz;
-
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-
 public class QuizActivity extends AppCompatActivity {
 
     @Override
@@ -282,13 +277,7 @@ so we can use the *findViewById()* method to access the buttons.  The following
 code defines four instance fields and assigns values to them in the
 *onCreate()* method.
 
-```Java
-package com.arthurneuman.triviaquiz;
-
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.widget.Button;
-
+```java
 public class QuizActivity extends AppCompatActivity {
     private Button option1Button;
     private Button option2Button;
@@ -326,14 +315,6 @@ code to the *QuizActivity.onCreate()* method that creates and logs a debug
 message regarding the event.
 
 ```java
-package com.arthurneuman.triviaquiz;
-
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-
 public class QuizActivity extends AppCompatActivity {
     private Button option1Button;
     private Button option2Button;
@@ -394,14 +375,6 @@ result in a "Correct!" toast and clicking on the others will result in an
 "Incorrect" toast.  
 
 ```java
-package com.arthurneuman.triviaquiz;
-
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.Toast;
-
 public class QuizActivity extends AppCompatActivity {
     private Button option1Button;
     private Button option2Button;

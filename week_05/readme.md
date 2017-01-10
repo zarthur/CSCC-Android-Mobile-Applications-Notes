@@ -101,11 +101,6 @@ test passes or fails.  We can define a test of the getters and setters of
 the *Contact* class so that our entire `ContactTest.java` file looks like this:
 
 ```java
-package com.arthurneuman.mycontacts;
-
-import org.junit.Test;
-import static org.junit.Assert.assertTrue;
-
 public class ContactTest {
     @Test
     public void contactAccessorTest() {
@@ -172,19 +167,6 @@ we'll need to define behavior for *Context.getPackageName()*.
 Here's the complete test class:
 
 ```java
-package com.arthurneuman.mycontacts;
-
-import android.app.Activity;
-import android.content.Context;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
-
-import static junit.framework.Assert.assertEquals;
-import static org.mockito.Mockito.when;
-
 @RunWith(MockitoJUnitRunner.class)
 public class ContactActivityTest {
     private static final String PACKAGE_NAME = "com.test.mycontacts";
