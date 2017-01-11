@@ -19,8 +19,8 @@ following the links below.
 - [Week 11 - Intents](week_11/readme.md)
 - [Week 12 - Data Persistence](week_12/readme.md)
 - [Week 13 - Consuming RESTful Services](week_13/readme.md)
-- [Week 14 - App Distribution](week_14/readme.md)
-- [Week 15 - Layout Flexibility and Assets](week_15/readme.md)
+- [Week 14 - Layout Flexibility](week_14/readme.md)
+- [Week 15 - App Distribution](week_15/readme.md)
 
 ## Software Versions
 These notes make use of Android Studio 2.2, Android SDK Platform 25, and

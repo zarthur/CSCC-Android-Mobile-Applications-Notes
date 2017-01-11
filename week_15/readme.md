@@ -1,4 +1,5 @@
-# Week 15 - Layout Flexibility and Assets
+# Week 15 - App Distribution
 
 ## Corresponding Text
-*Android Programming*, pp. 307-322
+http://developer.android.com/distribute/tools/launch-checklist.html
+
