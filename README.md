@@ -22,6 +22,15 @@ following the links below.
 - [Week 14 - Layout Flexibility](week_14/readme.md)
 - [Week 15 - App Distribution](week_15/readme.md)
 
+## Example
+Code and supporting files for *MyContacts* app completed in class can be found 
+[here](example/readme.md). This represents the state of the app at the 
+completion of the [week 15](week_15/readme.md) notes.
+
+## Project
+A description of the graded project can be found [here](project/readme.md). 
+A mock up will be posted at a later date.
+
 ## Software Versions
 These notes make use of Android Studio 2.2, Android SDK Platform 25, and
 the Java 8 JDK (1.8).  These notes may not be accurate for other versions.
