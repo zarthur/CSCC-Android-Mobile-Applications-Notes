@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="@string/settings_sync_category">
+
+        <EditTextPreference
+            android:defaultValue=""
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/settings_sync_server"
+            android:key="pref_key_sync_server"/>
+        <EditTextPreference
+            android:defaultValue=""
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/settings_sync_username"
+            android:key="pref_key_sync_username"/>
+        <EditTextPreference
+            android:defaultValue=""
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/settings_sync_password"
+            android:key="pref_key_sync_password"
+            android:password="true"
+            android:inputType="textPassword"/>
+    </PreferenceCategory>
+</PreferenceScreen>

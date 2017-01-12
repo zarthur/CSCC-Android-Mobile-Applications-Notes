@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">MyContacts</string>
+    <string name="name_hint">Name</string>
+    <string name="email_hint">Email</string>
+    <string name="favorite">Favorite</string>
+    <string name="new_contact">New Contact</string>
+    <string name="show_favorites">Show Favorites</string>
+    <string name="show_all">Show All</string>
+    <string name="address_hint">Address</string>
+    <string name="send_email">Send Email</string>
+    <string name="email_app_error">No Email App Configured</string>
+    <string name="settings_sync_category">Sync Settings</string>
+    <string name="settings_sync_server">Server Address</string>
+    <string name="settings_sync_username">Username</string>
+    <string name="settings_sync_password">Password</string>
+    <string name="settings">Settings</string>
+</resources>
