@@ -77,7 +77,7 @@ steps:
 This process will generate an APK in the `app` folder in your app's root 
 directory.
 
-![keystore](key-info,png)
+![keystore](images/key-info.png)
 
 ## Distribution
 Now that we have a signed APK, our next step should be to test the app - fixing 
