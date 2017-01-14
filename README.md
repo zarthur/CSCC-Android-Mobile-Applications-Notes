@@ -29,7 +29,8 @@ completion of the [week 15](week_15/readme.md) notes.
 
 ## Project
 A description of the graded project can be found [here](project/readme.md). 
-A mock up will be posted at a later date.
+A mock-up demonstrating some of the project app's functionality can be found 
+[here](project/todo-prototype/frame.html).
 
 ## Software Versions
 These notes make use of Android Studio 2.2, Android SDK Platform 25, and
