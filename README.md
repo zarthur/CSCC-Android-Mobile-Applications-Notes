@@ -30,8 +30,8 @@ completion of the [week 15](week_15/readme.md) notes.
 ## Project
 A description of the graded project can be found [here](project/readme.md). 
 A mock-up demonstrating some of the project app's functionality can be found 
-[here](project/files/todo-prototype.zip). After downloading and unzipping the 
-file, load the `frame.html` file.
+[here](https://github.com/zarthur/CSCC-Android-Mobile-Applications-Notes/raw/master/project/files/todo-prototype.zip). 
+After downloading and unzipping the file, load the `frame.html` file.
 
 ## Software Versions
 These notes make use of Android Studio 2.2, Android SDK Platform 25, and
