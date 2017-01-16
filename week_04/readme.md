@@ -414,7 +414,7 @@ handles a list of fragments and and a back stack of fragment transactions.
 The FragmentManager is also responsible for calling the lifecycle methods of a 
 fragment.  
 
-To use the Fragment manger, we can add teh following to *ContactActivity*'s 
+To use the Fragment manger, we can add the following to *ContactActivity*'s 
 *onCreate()* method:
 
 ```java
