@@ -15,6 +15,7 @@ finals week, each team will present their app to the class.
 
 ## Example
 A mocked-up example of a to-do app can be found 
-[here](todo-prototype/frame.html).  This example only demonstrates some 
+[here](project/files/todo-prototype.zip). After downloading and unzipping the 
+file, load the `frame.html` file. This example only demonstrates some 
 functionality of the app to be developed; see the description and milestones 
 above for more details.
