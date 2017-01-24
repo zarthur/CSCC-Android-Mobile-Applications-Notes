@@ -492,7 +492,7 @@ Activity state should not be confused with process state which accounts for
 apps running in the background.  
 
 ### Demonstration of the Activity Lifecycle
-We can how our app transitions through its various states while we interact
+We can see how our app transitions through its various states while we interact
 with it.  To do this, we will make use of the *android.util.Log* class to
 create log messages.
 
@@ -524,107 +524,25 @@ To log a message and see when *QuizActivity.onCreate()* is called, we can add
 the following to the overridden *onCreate()* method:
 
 ```java
-Log.d(TAG, "onCrate(Bundle) called");
+Log.d(TAG, "onCreate(Bundle) called");
 ```
 
 after the call to *super()*.
 
-The code in `QuizActivity.java` should now look similar to the following:
-
 ```java
 public class QuizActivity extends AppCompatActivity {
     private static final String TAG = QuizActivity.class.getSimpleName();
+    
+    ...
 
-    private Button mOption1Button;
-    private Button mOption2Button;
-    private Button mOption3Button;
-    private Button mOption4Button;
-    private Button mNextButton;
-
-    private TextView mQuestionTextView;
-
-    int mCurrentIndex = 0;
-
-    private Question[] mQuestions = new Question[] {
-            new Question(R.array.question_1, 3),
-            new Question(R.array.question_2, 3),
-            new Question(R.array.question_3, 1)
-    };
-
-    private void displayQuestion() {
-        Question currentQuestion = mQuestions[mCurrentIndex];
-        String[] questionText = getResources()
-                .getStringArray(currentQuestion.getQuestionResId());
-        mQuestionTextView.setText(questionText[0]);
-        mOption1Button.setText(questionText[1]);
-        mOption2Button.setText(questionText[2]);
-        mOption3Button.setText(questionText[3]);
-        mOption4Button.setText(questionText[4]);
-    }
-
-    private void checkAnswer(int buttonClicked) {
-        Question currentQuestion = mQuestions[mCurrentIndex];
-        if (currentQuestion.getCorrectAnswer() == buttonClicked) {
-            Toast.makeText(QuizActivity.this, R.string.toast_correct,
-                    Toast.LENGTH_SHORT).show();
-        }
-        else {
-            Toast.makeText(QuizActivity.this, R.string.toast_incorrect,
-                    Toast.LENGTH_SHORT).show();
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate(Bundle) called");
-        setContentView(R.layout.activity_quiz);
-
-        mOption1Button = (Button) findViewById(R.id.option_1_button);
-        mOption2Button = (Button) findViewById(R.id.option_2_button);
-        mOption3Button = (Button) findViewById(R.id.option_3_button);
-        mOption4Button = (Button) findViewById(R.id.option_4_button);
-        mNextButton = (Button) findViewById(R.id.next_button);
-        mQuestionTextView = (TextView) findViewById(R.id.question_text_view);
-
-        displayQuestion();
-
-        mOption1Button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                checkAnswer(1);
-            }
-        });
-
-        mOption2Button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                checkAnswer(2);
-            }
-        });
-
-        mOption3Button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                checkAnswer(3);
-            }
-        });
-
-        mOption4Button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                checkAnswer(4);
-            }
-        });
-
-        mNextButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mCurrentIndex = (mCurrentIndex + 1) % mQuestions.length;
-                displayQuestion();
-            }
-        });
-
+        
+        ...
+        
     }
 }
 ```
