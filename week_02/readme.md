@@ -71,7 +71,7 @@ objects. Because the code associated with controller objects is often
 application-specific, it described as containing the "application logic".  The
 *QuizActivity* class represents the TriviaQuiz controller layer.
 
-Using MVC makes it easier to design and keep track of parts of an application.  
+Using MVC makes it easier to design and keep track of parts of an application. 
 We often use classes to group related methods and data; similarly, we can
 group similar objects into the model, view, and controller layers based on
 their purpose.  In addition to make it easier to understand the function of
