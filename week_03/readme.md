@@ -244,8 +244,8 @@ Activity**. Configure the new activity with values similar to those pictured.
 
 This will create a new Java class file and an XML layout file as well as
 update the Android manifest file.  Our new activity, will prompt the user to
-confirm that they want a a hint so we'll add a *LinearLayout* containing a
-*Plain TextView* and a *Button*.  As a first step, replace the automatically
+confirm that they want a a hint so we'll add a *LinearLayout* containing two
+*Plain TextView*s and a *Button*.  As a first step, replace the automatically
 generated *RelativeLayout* in the layout file with a *LinearLayout*.  The
 easiest way to do this is by modifying the XML and changing `RelativeLayout`.
 In *Design* view, be sure the following properties are set on the layout:
@@ -254,11 +254,6 @@ In *Design* view, be sure the following properties are set on the layout:
 |:------------|:---------|
 | gravity     | [center] |
 | orientation | vertical |
-
-
-```
-android:orientation="vertical"
-```
 
 In the *Design* view, drag and drop two *Plain TextView* widgets and a *Button*
 below the *TextView* widgets. Set the following properties:
@@ -593,7 +588,7 @@ public class HintActivity extends AppCompatActivity {
 }
 ```
 
-Not that part of the code for *HintActivity* has been excluded from the above
+Note that part of the code for *HintActivity* has been excluded from the above
 code and is represented by the ellipses (...).  
 
 If we run the app, we can press the **Hint** button to start the hint activity.
