@@ -24,7 +24,7 @@ following the links below.
 
 ## Example
 Code and supporting files for *MyContacts* app completed in class can be found 
-[here](example/readme.md). This represents the state of the app at the 
+[here](example/). This represents the state of the app at the 
 completion of the [week 15](week_15/readme.md) notes.
 
 ## Project
