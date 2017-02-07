@@ -263,14 +263,14 @@ public View onCreateView(LayoutInflater inflater, ViewGroup container,
 }
 ```
 
-As parameters to the *onCreate()* method, the *LayoutInflater* is responsible 
-for creating the view from a specified XML file, the *ViewGroup* specifies 
-where the inflated view will be contained, and the *Bundle* contains any state 
-information that can be used to recreate the view.  The arguments passed to 
-the *LayoutInflater.inflate()* method specify the layout resource id, the 
-*ViewGroup*, and a *boolean* that determines whether or not to add the view 
-to the parent; we'll specify `false` because we'll add the view in the 
-activity's code.  
+Similar to the parameters in the *onCreate()* method, the *LayoutInflater* is 
+responsible for creating the view from a specified XML file, 
+the *ViewGroup* specifies where the inflated view will be contained, 
+and the *Bundle* contains any state information that can be used to recreate 
+the view.  The arguments passed to the *LayoutInflater.inflate()* method 
+specify the layout resource id, the *ViewGroup*, and a *boolean* that 
+determines whether or not to add the view to the parent; we'll specify `false` 
+because we'll add the view in the activity's code.  
 
 In *onCreateView()*, we can also add listeners to our *EditText* widgets. 
 We'll update the *Contact* instance, `mCrime`, when the text in the the 
@@ -410,8 +410,9 @@ paused, and stopped and has corresponding methods for each state transition.
 
 For a given activity, the *FragmentManager* is responsible for managing 
 fragments and adding their views to the view hierarchy.  The FragmentManager 
-handles a list of fragments and and a back stack of fragment transactions. 
-The FragmentManager is also responsible for calling the lifecycle methods of a 
+handles a list of fragments and and a back stack of fragment transactions, 
+providing functionality when a user presses the back button. The 
+FragmentManager is also responsible for calling the lifecycle methods of a 
 fragment.  
 
 To use the Fragment manger, we can add the following to *ContactActivity*'s 
