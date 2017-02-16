@@ -2,6 +2,7 @@ package com.arthurneuman.mycontacts;
 
 import org.junit.Test;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 
 public class ContactTest {
     @Test
@@ -13,5 +14,11 @@ public class ContactTest {
         contact.setEmail(email);
         assertTrue((contact.getName().equals(name)
                 && contact.getEmail().equals(email)));
+    }
+
+    @Test
+    public void UUIDcreationTest() {
+        Contact contact = new Contact();
+        assertNotNull(contact.getID());
     }
 }

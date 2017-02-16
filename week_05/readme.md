@@ -122,9 +122,6 @@ using the appropriate setters.  Finally, we use `assertTrue` to test that
 the getters return the values we supplied to the setters - this is the expected 
 behavior.  
 
-If *Contact* had more complex functionality, we could define additional tests 
-to verify that *Contact* behaved in the expected manner.
- 
 To run the test, we can either right-click on the `ContactTest.java` file and 
 select **Run 'ContactTest'** or right-click on the "test" folder and select 
 **Run 'Tests in 'mycontacts''**.  In either case, if the tests pass, we should 
@@ -139,6 +136,21 @@ assertTrue((contact.getName().equals(email)
 
 We'll see a message indicating that a test failed and an **AssertionError** 
 indicating exactly which test failed.
+
+Let's add one more test to ensure that newly created instances of *Contact* 
+have non-null IDs:
+
+```java
+    @Test
+    public void UUIDcreationTest() {
+        Contact contact = new Contact();
+        assertNotNull(contact.getID());
+    }
+```
+
+If *Contact* had more complex functionality, we could define additional tests 
+to verify that *Contact* behaved in the expected manner.
+
 
 ### Mocking Android Dependencies
 By default, when we run our tests, they are executed with a modified version 
@@ -241,3 +253,64 @@ The GPU monitor indicates the time required to render the apps interface.
 Unless the app makes use of advanced graphics, we shouldn't expect rendering to 
 take a lot of time.  If we have a lot of UI elements, we might see this 
 reflected in the GPU monitor. 
+
+To demonstrate a memory leak, consider the following example adapted from 
+[Codexpedia.com](http://www.codexpedia.com/android/memory-leak-examples-and-solutions-in-android/). 
+First, create a new app with an empty activity.  Update the activity to include 
+the following code:
+
+```java
+public class MainActivity extends AppCompatActivity {
+    private Handler mLeakyHandler = new Handler();
+    private int[] mValues = new int[5 * 1024 * 1024];
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Post a message and delay its execution for 10 seconds.
+        mLeakyHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(MainActivity.this, 
+                        "Number of items: " + mValues.length, 
+                        Toast.LENGTH_LONG)
+                .show();
+            }
+        }, 1000 * 10);
+    }
+```
+
+Here, we are making use of a *Handler*.  A *Handler* lets us add a *Message*, a 
+special object to store data, or a *Runnable* to a queue as well as process 
+objects in the queue.  A *Handler* will allow us to create threads that can 
+interact with the UI. Here, we add a *Runnable* that displays a message about 
+the size of the *mValues* array.  Because the new thread requires information 
+about *mValues*, a reference to the object is maintained until the activity is 
+destroyed and the thread has executed.  
+
+Now start the app and rotate the device a few times.  Eventually, the app 
+should crash.  If we view the log messages using **logcat**, we can see that 
+the app crashed due to a lack of memory.  If we restart the app and use the 
+memory monitor while rotating the app, we can see that the app slowly consumes 
+more and more memory until it crashes.
+
+![memory usage](images/memory.png)
+
+If we wanted to gain more insight into what was using memory, we could track 
+memory allocation by clicking the **Start Allocation Tracking** button.  Once 
+the app crashes, click the button again to see what the memory allocation 
+looked like - we should see multiple *int* arrays consuming large amounts of 
+ram.  
+
+![memory allocation](images/allocation.png)
+
+Though this example exaggerates the issue by initializing a large array , 
+the way the code is written is still causing a memory leak - when the activity 
+is destroyed, due to rotation or something else, the *Handler* queue is not 
+cleared; this can be done by adding the following to the 
+*MainActivity.onDestroy()* method:
+
+```java
+    mLeakyHandler.removeCallbacksAndMessages(null);
+```
