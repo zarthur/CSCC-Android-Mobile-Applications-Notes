@@ -301,7 +301,7 @@ If we wanted to gain more insight into what was using memory, we could track
 memory allocation by clicking the **Start Allocation Tracking** button.  Once 
 the app crashes, click the button again to see what the memory allocation 
 looked like - we should see multiple *int* arrays consuming large amounts of 
-ram.  
+RAM.  
 
 ![memory allocation](images/allocation.png)
 
