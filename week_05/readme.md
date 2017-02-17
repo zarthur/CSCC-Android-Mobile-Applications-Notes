@@ -32,9 +32,10 @@ instrumented test, we can write a local test if we mock *Bundle*.
 
 ### Setup
 We're going to focus on local tests.  To create and run our tests, we'll make 
-use of two testing frameworks: JUnit and Mockito.  This will require that we 
-explicitly indicate to the build system, Gradle, that our project depends on 
-these frameworks.  To do this, we'll modify the module's `build.gradle` file.
+use of some testing frameworks: JUnit, Mockito, and PowerMock.  This will 
+require that we explicitly indicate to the build system, Gradle, that our 
+project depends on these frameworks.  To do this, we'll modify the module's 
+`build.gradle` file.
 
 ![gradle](images/module-gradle.png)
 
@@ -51,8 +52,8 @@ dependencies {
 }
 ```
 
-Notice that there's already an entry for JUnit.  Let's add an entry for 
-Mockito. The dependencies section should now looks like this:
+Notice that there's already an entry for JUnit.  Let's add entries for Mockito 
+and PowerMock. The dependencies section should now looks like this:
 
 ```
 dependencies {
@@ -63,10 +64,13 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.0.1'
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:1.10.19'
+    testCompile 'org.powermock:powermock-api-mockito:1.6.6'
+    testCompile 'org.powermock:powermock-module-junit4:1.6.6'
 }
 ```
 
-Once the additional dependency is added, you should be prompted to sync Gradle.
+Once the additional dependencies are added, you should be prompted to sync 
+Gradle.
 
 ### Creating Tests
 When viewing the structure of our app in the Android view, we can see three 
@@ -92,50 +96,54 @@ classes:
 
 ```Java
 import org.junit.Test;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 ```
 
 The `org.junit.Test` class will be used as a decorator to indicated that a 
-method represents a test.  `assertTrue` will be used to determine if the 
-test passes or fails.  We can define a test of the getters and setters of 
-the *Contact* class so that our entire `ContactTest.java` file looks like this:
+method represents a test.  `assertEquals` will be used to determine if the 
+test passes or fails.  We can define tests for the getters and setters of 
+the *Contact* class.  If the getters and setters of the *Contact* class depend 
+on any component of the Android framework, such as *Log*, the following 
+examples will not work; comment out any Android-dependent functionality, create 
+different tests, or see the details of instrumented tests below.
+
+The following are two tests for the accessor methods in the *Contact* class: 
 
 ```java
 public class ContactTest {
     @Test
-    public void contactAccessorTest() {
+    public void contactNameTest() {
         String name = "Test Name";
-        String email = "name@test.com";
         Contact contact = new Contact();
         contact.setName(name);
+        assertEquals(name, contact.getName());
+    }
+
+    @Test
+    public void contactEmailTest() {
+        String email = "name@test.com";
+        Contact contact = new Contact();
         contact.setEmail(email);
-        assertTrue((contact.getName().equals(name)
-                && contact.getEmail().equals(email)));
+        assertEquals(email, contact.getEmail());
     }
 }
 ```
 
-In the *ContactTest* class we define one test: *contactAccessorTest()*.  In the 
-test we set two strings, one for a name and one for an email address. Next, we 
-create a new instance of the *Contact* class and set the name and email fields 
-using the appropriate setters.  Finally, we use `assertTrue` to test that 
-the getters return the values we supplied to the setters - this is the expected 
-behavior.  
+In the *ContactTest* class we define two tests: *contactNameTest()* and 
+*contactEmailTest()*.  In each test we set a value for a string, create a new 
+instance of the *Contact* class and use the appropriate setter.  In each test, 
+we assert that something must be the case in order for the test to pass: that 
+the string we created is equal to the value returned by the appropriate getter. 
 
-To run the test, we can either right-click on the `ContactTest.java` file and 
+To run the tests, we can either right-click on the `ContactTest.java` file and 
 select **Run 'ContactTest'** or right-click on the "test" folder and select 
 **Run 'Tests in 'mycontacts''**.  In either case, if the tests pass, we should 
 see a message indicating that the tests passed.
 
-Let's change the *contactAccessorTest()* method so that the last line is 
-
-```java
-assertTrue((contact.getName().equals(email)
-        && contact.getEmail().equals(name)));
-```
-
-We'll see a message indicating that a test failed and an **AssertionError** 
-indicating exactly which test failed.
+If we modify the behavior of the Contact class so that the expected value of 
+*getName()* or *getEmail()* is not returned, we'll see a message indicating 
+that a test failed and an **AssertionError** indicating exactly which test 
+failed.
 
 Let's add one more test to ensure that newly created instances of *Contact* 
 have non-null IDs:
@@ -182,6 +190,7 @@ Here's the complete test class:
 @RunWith(MockitoJUnitRunner.class)
 public class ContactActivityTest {
     private static final String PACKAGE_NAME = "com.test.mycontacts";
+    
     @Mock
     Context mContext;
 
@@ -196,7 +205,8 @@ public class ContactActivityTest {
 
 ```
 
-First, we have to annotate our class with `@RunWith(MockitoJUnitRunner.class)`. 
+First, we have to annotate our class with `@RunWith(MockitoJUnitRunner.class)` 
+which will cause Mockito to process/run the test rather than JUnit directly. 
 Next, we specify the Android classes we'll mock using the the `@Mock` 
 annotation. We define the behavior of the mocked objects using the 
 `when(...).thenReturn(...)` construction to specify the return value when a 
@@ -206,6 +216,47 @@ context.  If things behave as expected, the value returned by
 *ContactActivity.getPackage()* should be the same as the value returned by 
 the *Context*, which we defined.  This trivial example would throw an exception 
 if we didn't create a mocked *Context* class. 
+
+A weakness of Mockito is that we cannot use it to mock static methods like 
+those we'd use from the *Log* class.  We can use PowerMock to do this.  Recall 
+that when we updated the app's dependencies, we added two PowerMock libraries. 
+One is used to integrated PowerMock with JUnit and the other to interact with 
+Mockito.  This allows us to make minimal changes to existing tests to 
+incorporate PowerMock functionality.  As an example, modify the 
+*contactActivity.getPackageName()* method to include code that generates a log 
+message.
+
+```java
+public String getPackage(Context context) {
+    Log.d(ContactActivity.class.getSimpleName(), "Getting package name");
+    return context.getPackageName();
+}
+```
+
+Running the existing test using Mockito will fail.  Using PowerMock, we can 
+indicate that we'll need to mock the *Log* class using the *PrepareForTest* 
+class annotation and the *PowerMockito.mockStatic()* method within a test. 
+We'll also have to update the *RunWith* class annotation to use 
+*PowerMockRunner*.  Here's the updated test using PowerMock:
+
+```java
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(Log.class)
+public class ContactActivityTest {
+    private static final String PACKAGE_NAME = "com.test.mycontacts";
+    @Mock
+    Context mContext;
+
+    @Test
+    public void contactFragmentCreationTest() {
+        when(mContext.getPackageName()).thenReturn(PACKAGE_NAME);
+        PowerMockito.mockStatic(Log.class);
+        ContactActivity contactActivity = new ContactActivity();
+        String packageName = contactActivity.getPackage(mContext);
+        assertEquals(PACKAGE_NAME, packageName);
+    }
+}
+```
 
 ## Profiling 
 Users expect apps to start quickly and be responsive.  As we develop the app it 
@@ -230,12 +281,13 @@ charts that are displayed providing information about usage over time:
 ![monitors](images/monitor-monitors.png)
 
 Each chart has a set of tools available for use.  The memory chart shows our 
-app's memory usage over time.  In adddition to being able to track the usage,
+app's memory usage over time.  In addition to being able to track the usage,
 we can also use the monitor to dump the heap, where all runtime data is stored, 
-to what is consuming memory; track memory allocations of objects; and force 
-the garbage collector to run. A common problem, especially when using media, is 
-consuming more memory than is available leading to a crash.  The memory monitor 
-and it's tools can help determine what is consuming large amounts of memory.
+to determine what is consuming memory; track memory allocations of objects; and 
+force the garbage collector to run. A common problem, especially when using 
+media, is consuming more memory than is available leading to a crash.  The 
+memory monitor and it's tools can help determine what is consuming large 
+amounts of memory.
 
 The CPU monitor displays the app's processor usage.  Additionally, we can track 
 method execution using the method tracer tool.  The CPU monitor is useful if we 
