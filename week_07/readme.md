@@ -1,195 +1,63 @@
-# Week 7 - Views and Adapters
+# Week 7 - Fragment Arguments and ViewPager
 
 ## Corresponding Text
-*Android Programming*, pp. 167-191
+*Android Programming*, pp. 193-212
 
-## Creating a List of Items
-Ultimately, we'd like to be able to create contacts, view a list of our 
-contacts, and select a contact from the list to view it's details.  Right now, 
-we have part of what's needed when viewing an existing contact or creating a 
-new one.  As a next step, we'll focus on how we can list a collection of 
-contacts.
+## Starting an Activity from a Fragment
+Now that we have the ability to list all our contacts as well as a way of 
+displaying contact details, it would be nice if we could view the details 
+of a specific contact by selecting it from our list.  We'll look at two ways 
+of accomplishing this: by using extras and by using fragment arguments. 
 
-### Updating the Model
-As a first step, we'll need to update our model to include a means of storing 
-a collection of *Contact* object, something like an address book.  Because 
-we will only every need one instance of this new class, we'll create a 
-singleton.  A **singleton** class has at most one instance.  In order to 
-create a singleton, we'll create class and make its constructor private; this 
-will prevent other objects from creating instances of the class.  So how can 
-we create one instance of a class with a private constructor?  Because the 
-constructor is private, only methods belonging to the class can use it.  We can 
-create a method that checks to see if an instance exists and returns the 
-existing instance if it exists or creates it and returns it if the instance 
-does not exist.  Let's call the class *AddressBook*.  Here's the necessary code 
-to make *AddressBook* a singleton.
+### Using an Intent Extra
+Previously, we looked at a way of using intent extras to start an activity from 
+another activity; starting an activity from a fragment works in a similar way.
+
+To start, let's modify the behavior of the app when a list item is pressed.  
+Previously, we defined the behavior in *ContactHolder.onClick()* in 
+`AddressBookFragment.java`.  We were creating a toast to indicate that an item 
+was pressed - let's replace that.  
 
 ```java
-public class AddressBook {
-    private static AddressBook sAddressBook;
-
-    private AddressBook() {
-    }
-
-    public static AddressBook get() {
-        if (sAddressBook == null) {
-            sAddressBook = new AddressBook();
+public class AddressBookFragment extends Fragment {
+    ...
+    private class ContactHolder extends RecyclerView.ViewHolder
+            implements View.OnClickListener{
+        ...
+        @Override
+        public void onClick(View v) {
+            Intent intent = new Intent(getActivity(), ContactActivity.class);
+            startActivity(intent);
         }
-        return sAddressBook;
     }
-
+    ...
 }
 ```
 
-Here, the *AddressBook* class has a static field to store an instance of the 
-class and a public, static method named *get()* that will return an instance of 
-the class, creating it if necessary.  It's important that the field and method 
-be static since we won't have an instance to begin with.
-
-Now that we've made sure we can have at most one *AddressBook*, let's add the 
-functionality required to store contacts.  Recall that one of the fields on the 
-*Contact* class involved an ID; we'll add functionality to *AddressBook* to 
-find a contact using it's ID.
-
-```java
-public class AddressBook {
-    private static AddressBook sAddressBook;
-    private List<Contact> mContacts;
-
-    private AddressBook() {
-        mContacts = new ArrayList<>();
-    }
-
-    public static AddressBook get() {
-        if (sAddressBook == null) {
-            sAddressBook = new AddressBook();
-        }
-        return sAddressBook;
-    }
-
-    public List<Contact> getContacts() {
-        return mContacts;
-    }
-
-    public Contact getContact(UUID id) {
-        for (Contact contact: mContacts) {
-            if (contact.getID().equals(id)) {
-                return contact;
-            }
-        }
-        return null;
-    }
-}
-```
-
-We've added a private field *mContacts* to store a *List* of *Contact* 
-instances and assigned a new *ArrayList* to it in the private constructor. 
-We've also added two public methods: one to return all the stored contacts and 
-one to search for contacts based on a specified ID.
-
-Eventually, we'll add functionality for the user to create new contacts and 
-these will be added to the list of contacts but for now, let's pre-populate 
-the list with some made-up contacts.  We can do this by adding code to the 
-constructor:
-
-```java
-    private AddressBook() {
-        mContacts = new ArrayList<>();
-        for (int i=0; i<100; i++) {
-            Contact contact = new Contact();
-            contact.setName("Person " + i);
-            contact.setEmail("Person" + i + "@email.com");
-            
-            // set every 10th as a favorite
-            if (i % 10 == 0) {
-                contact.setFavorite(true);
-            }
-            
-            mContacts.add(contact);
-        }
-
-    }
-```  
-This will create contacts with names like "Person 1", email addresses like 
-"Person1@email.com", and every 10<sup>th</sup> contact marked as a favorite.
-
-### Updating the Controller
-We will create a fragment to display our list of contacts.  Just like before 
-when we created a fragment to display contact information, we had to first 
-create an activity to host the fragment.  If we look at the XML defining 
-`activity_contact.xml`, we can see that it doesn't make use of any particular 
-fragment:
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:id="@+id/fragment_container"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent">
-</FrameLayout>
-```
-
-We can actually reuse this activity to host a new fragment we create. 
-Right-click on `activity_contact.xml` in the **Project** view and select 
-**Refactor -> Rename**; enter `activity_fragment.xml` as the new name.  Our 
-code in the *ContactActivity* class should have automatically updated to use 
-the fragment's new name.  
-
-Looking at the code for the *ContactActivity* class, we can see that if we 
-wanted to create a new activity to host a single fragment, we could reuse most 
-of the code.  The exception is that code that creates an instance of 
-*ContactFragment*:
-
-```java
-fragment = new ContactFragment();
-```
-
-Rather than copying and repeating most of this code for a new activity, it 
-would be nice if we could create a class from which *ContactActivity* and the 
-new activity class we will create could inherit from.  One way we can do this 
-is by creating an abstract class with the same code that *ContactActivity* 
-currently has but replaces `new ContactFragment()` with a call to method that 
-creates a fragment.  If we make this new method abstract in the base class, we 
-can force any class that extends the base class to implement the method.  
-
-Let's create a new abstract class named `SingleFragmentActivity`; its code will 
-be similar to the code already in *ContactActivity*:
-
-```java
-public abstract class SingleFragmentActivity extends FragmentActivity{
-    public String getPackage(Context context) {
-        return context.getPackageName();
-    }
-
-    protected abstract Fragment createFragment();
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_fragment);
-
-        FragmentManager fm = getSupportFragmentManager();
-        Fragment fragment = fm.findFragmentById(R.id.fragment_container);
-
-        if (fragment==null) {
-            fragment = createFragment();
-            fm.beginTransaction()
-                    .add(R.id.fragment_container, fragment)
-                    .commit();
-        }
-
-    }
-}
-```
-
-This new abstract class declares an abstract method, *createFragment()*, that 
-will return an instance of the *Fragment* class.  Additionally, the 
-*onCreate()* method now calls the *createFragment()* method to assign a value 
-to the *fragment* field.  We can now rewrite *ContactActivity* to extend this 
-abstract class:
+When a list item is pressed, we'll create an *Intent* using the *Activity* 
+returned by the *getActivity()* method inherited from *Fragment* and by 
+specifying the class of the activity to start.  If we run the app now and 
+tap on one of the listed contacts, we'll see that a blank *ContactFragment* is 
+loaded.  We need to be able to indicated to the *ContactFragment* which item 
+was tapped.  One way we can do this by adding an extra to the *Intent* that is 
+used to start the new activity.  Recall that intent extras rely on name/value 
+pairs so we'll need a unique name for any data we want to include as an extra.
+Because we'll be using the intent to start the *ContactActivity* activity and 
+because it will need to make use of the data in the intent extra, let's add 
+a class method that can be used to create an intent for starting 
+*ContactActivity* and that stores the ID of a contact.
 
 ```java
 public class ContactActivity extends SingleFragmentActivity {
+    public static final String EXTRA_CONTACT_ID =
+            "com.arthurneuman.mycontacts.contact_id";
+
+    public static Intent newIntent(Context packageContext, UUID contactID) {
+        Intent intent = new Intent(packageContext, ContactActivity.class);
+        intent.putExtra(EXTRA_CONTACT_ID, contactID);
+        return intent;
+    }
+    
     @Override
     protected Fragment createFragment() {
         return new ContactFragment();
@@ -197,31 +65,346 @@ public class ContactActivity extends SingleFragmentActivity {
 }
 ```
 
-Next, we can create the controller classes that will work with the fragment 
-used to display a list of contacts.  Let's create two classes: 
-*AddressBookFragment* and *AddressBookActivity*. Right now, we won't add any 
-code to the *AddressBookFragment* class:
+We can now use this method in *ContactHolder.onClick()*:
 
 ```java
 public class AddressBookFragment extends Fragment {
+    ...
+    private class ContactHolder extends RecyclerView.ViewHolder
+            implements View.OnClickListener{
+       ...
+        @Override
+        public void onClick(View v) {
+            Intent intent = ContactActivity.newIntent(getActivity(), 
+                    mContact.getID());
+            startActivity(intent);
+        }
+    }
+    ...
 }
 ```
 
-*AddressBookActivity* will look similar to *ContactActivity* but the 
-*createFragment()* will create an instance of *AddressBookFragment*:
+This will start the new activity with the ID of the contact that was pressed.  
+Next, we need to make use of the ID included with the *Intent* to load the 
+appropriate contact and update the view.  First, we can use the ID to load 
+the associated contact; in `ContactFragment.java`, modify the *onCreate()* 
+method:
 
 ```java
-public class AddressBookActivity extends SingleFragmentActivity {
+public class ContactFragment extends Fragment {
+    ...
     @Override
-    protected Fragment createFragment() {
-        return new AddressBookFragment();
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        UUID contactID = (UUID) getActivity().getIntent()
+                .getSerializableExtra(ContactActivity.EXTRA_CONTACT_ID);
+        mContact = AddressBook.get().getContact(contactID);
+    }
+    ...
+}
+```
+
+First we get the *Activity* that loaded the *ContactFragment*, then get the 
+*Intent* and extra from it.  Now that we have a *Contact*, we'll need to update 
+the view to include it's data:
+
+```java
+public class ContactFragment extends Fragment {
+    ...
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        ...
+        mNameField = (EditText)v.findViewById(R.id.contact_name);
+        mNameField.setText(mContact.getName());
+        ...
+        mEmailField = (EditText)v.findViewById(R.id.contact_email);
+        mEmailField.setText(mContact.getEmail());
+        ...
+        mFavoriteCheckBox = (CheckBox)v.findViewById(R.id.contact_favorite);
+        mFavoriteCheckBox.setChecked(mContact.isFavorite());
+        ...
     }
 }
 ```
 
-In order to use the activity in our app, we have to declare it in the 
-application's manifest located in the `app/manifests` folder in the Android 
-project view. 
+If we run the app now, we should be able to tap on individual contacts and view 
+their details. Though having *ContactFragment* access the intent that is used 
+to start *ContactActivity* resulted in straightforward code, the fragment is no 
+longer usable with any activity that doesn't provide the appropriate intent. 
+
+### Using Fragment Arguments
+Rather than extracting information from an *Activity*, a *Fragment* can have 
+a *Bundle* attached to it.  Like intent extras, a bundle contains key/value 
+pairs known as arguments.  A bundle can be attached to a fragment using the 
+*Fragment.setArguments()* method but it must be used after the fragment 
+instance is created and before it is added to an activity.  To do this, we'll 
+add a static method to *ContactFragment*:
+
+```java
+public class ContactFragment extends Fragment {
+    ...
+    private static final String ARG_CONTACT_ID = "contact_id";
+
+    public static ContactFragment newInstance(UUID contactID) {
+        ContactFragment contactFragment = new ContactFragment();
+        Bundle args = new Bundle();
+        args.putSerializable(ARG_CONTACT_ID, contactID);
+        contactFragment.setArguments(args);
+        return contactFragment;
+    }
+    ...
+}
+``` 
+
+*ContactActivity* should now call the new static method when creating the 
+fragment:
+
+```java
+public class ContactActivity extends SingleFragmentActivity {
+    private static final String EXTRA_CONTACT_ID =
+            "com.arthurneuman.mycontacts.contact_id";
+    ...
+    @Override
+    protected Fragment createFragment() {
+        UUID contactID = (UUID) getIntent()
+                .getSerializableExtra(EXTRA_CONTACT_ID);
+        return ContactFragment.newInstance(contactID);
+    }
+}
+```
+
+We can also make *ContactActivity.EXTRA_CONTACT_ID* private.
+
+At this point, we've gone from the fragment needing to know something specific 
+about it's activity (the intent extra) to the activity needing to know 
+something specific about the fragment it's creating (that it has a static 
+method that can create an instance with a contact ID); this is an acceptable 
+trade-off as hosting activities can be expected to know the specifics of 
+how to host their fragments.
+
+Finally, we have to use the contact ID to get an instance of *Contact* in 
+*ContactFragment*.  To do this, we can replace the code responsible for 
+accessing the hosting activity's intent in *ContactFragment.onCreate()*:
+
+```java
+public class ContactFragment extends Fragment {
+    ...
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        UUID contactID = (UUID) getArguments().getSerializable(ARG_CONTACT_ID);
+        mContact = AddressBook.get().getContact(contactID);
+    }
+}
+```
+
+If we run the app, it should behave as it did before but now *ContactFragment* 
+isn't so dependent on its hosting activity.
+
+### Updating
+Recall that our code in *contactFragment* included event listeners that updated 
+the model when changes were made.  If we tap a contact from the list, change 
+it, then go back to the list, we don't see the changes.  In order for the 
+changes to appear, we have to modify the *RecyclerView* *Adapter* to expect 
+changes.  
+
+The *ActivityManager* maintains a stack known as the "back stack".  As 
+activities are created, they are added to the back stack so that a user can use 
+the back button to return to a previous activity.  When our app starts, the 
+back stack contains *AddresBookActivity*.  When a row is pressed and an 
+instance of *ContactActivity* is created, that new instances is added to the 
+back stack.  When the back button is pressed, the top activity is removed and 
+the next activity is displayed.  
+
+When an activity is no longer at the top of the back stack, it is paused and 
+usually stopped.  When it returns to the top, it is started, if necessary, and 
+resumed.  When *AddresBookActivity* is resumed, the OS calls *onResume()* on 
+any fragments hosted by the activity.  We can use 
+*AddressBookFragment.onResume()* to update the list by calling 
+*AddresBookFragment.updateUI()*.  We have to be careful to not create a new 
+*ContactAdapter* if it already exists; we can call 
+*ContactAdapter.notifyDataSetChanged()* instead.
+
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateUI();
+    }
+
+    private void updateUI() {
+        AddressBook addressBook = AddressBook.get();
+        List<Contact> contacts = addressBook.getContacts();
+        if (mContactAdapter == null) {
+            mContactAdapter = new ContactAdapter(contacts);
+            mAddressBookRecyclerView.setAdapter(mContactAdapter);
+        }
+        else {
+            mContactAdapter.notifyDataSetChanged();
+        }
+    }
+    ...
+}
+``` 
+
+## ViewPagers
+We now have the ability to view a list of contacts and view the details of each 
+one individually.  While that is useful, it isn't a quick task to move from 
+one contact to the next: we have to tap the back button then tap the next 
+contact, repeating this process everytime we want to see another contact.  A 
+lot of apps allow users to swipe left and right between similar items; we can 
+do the same for our contact details.  In order to support this, we'll create a 
+new activity to host *ContactFragment* with a *ViewPager* layout; *ViewPager* 
+is responsible for supporting the swiping behavior.   We'll see that 
+*ViewPager* is similar to *RecyclerView* in some ways; one key difference is 
+that while *RecyclerView* can display several things on screen, *ViewPager* 
+is used to display only one item on screen at a time.
+
+To begin, let's create a new layout resource file, `activity_contact_pager.xml` 
+with root element `android.support.v4.view.ViewPager`.  Be sure to set its ID. 
+The XML for the new resource should look similar to the following:
+
+```XML
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v4.view.ViewPager
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/activity_contact_pager_view_pager">
+
+</android.support.v4.view.ViewPager>
+```
+
+Next, let's create a new activity, *ContactPagerActivity* that will derive 
+from *FragmentActivity* and override its *onCreateView()* method to set the 
+view using the layout we created:
+
+```java
+public class ContactPagerActivity extends FragmentActivity {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_contact_pager);
+    }
+}
+```
+
+Like a *RecyclerView* that requires an *Adapter* to provide views, a 
+*ViewPager* also requires a special *Adapter* to provide views: a 
+*PagerAdapter*.  While there are a lot more details to the interactions between 
+a *ViewPager* and a *PagerAdapter* than between a *RecyclerView* and its 
+*Adapter*, we can use a subclass of *PagerAdapter*, *FragmentStatePagerAdapter* 
+to handle most of the details.  In order to use a *FragmentStatePagerAdapter*, 
+we'll need to implement two methods: *getCount()* and *getItem()*. The 
+*getCount()* method will return the total number of items.  The *getItem()* 
+method takes an integer parameter and should return a *Fragment* configured to 
+display the item at the corresponding integer position.  
+
+In the *ContactPagerActivity.onCreate()* method, we can get the *ViewPager* 
+in the new layout using its ID, then use the *ViewPager.setAdapter()* method 
+to assign a new *FragmentStatePagerAdapter* to it.  When we create a new 
+instance of *FragmentStatePagerAdapter*, we'll need to provide it the 
+fragment manager as a parameter.  Additionally, we'll need to use *AddressBook* 
+to get a list of contacts.
+
+Here's the code necessary to create an instance of *FragmentStatePagerAdapter*, 
+override its *getItem()* and *getCount()* methods, and assign it to the 
+*ViewPager*:
+
+```java
+public class ContactPagerActivity extends FragmentActivity {
+    private ViewPager mViewPager;
+    private List<Contact> mContacts;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_contact_pager);
+
+        mContacts = AddressBook.get().getContacts();
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        mViewPager = (ViewPager) findViewById(
+                R.id.activity_contact_pager_view_pager);
+
+        mViewPager.setAdapter(new FragmentStatePagerAdapter(fragmentManager) {
+            @Override
+            public Fragment getItem(int position) {
+                Contact contact = mContacts.get(position);
+                return ContactFragment.newInstance(contact.getID());
+            }
+
+            @Override
+            public int getCount() {
+                return mContacts.size();
+            }
+        });
+    }
+}
+```
+
+Now that we've coded *ContactPagerActivity*, we'll need to replace usages 
+of *ContactActivity* in other places in our code.  Recall that we added a 
+*newIntent()* method to *ContactActivity* to allow *AddresBookActivity* to 
+start it; we'll have to do something similar to *ContactPagerActivity*.  An 
+intent extra will be used to indicate which initial contact should be 
+displayed.  We can use the ID with the *ViewPager.setCurrentItem()* method 
+to display the correct contact's details:
+
+```java
+public class ContactPagerActivity extends FragmentActivity {
+    private static final String EXTRA_CONTACT_ID =
+            "com.arthurneuman.mycontacts.contact_id";
+
+    private ViewPager mViewPager;
+    private List<Contact> mContacts;
+
+    public static Intent newIntent(Context packageContext, UUID contactID) {
+        Intent intent = new Intent(packageContext, ContactPagerActivity.class);
+        intent.putExtra(EXTRA_CONTACT_ID, contactID);
+        return intent;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        ...
+        UUID contactID = (UUID) getIntent()
+                .getSerializableExtra(EXTRA_CONTACT_ID);
+        for (int index = 0; index < mContacts.size(); index++) {
+            if (mContacts.get(index).getID().equals(contactID)) {
+                mViewPager.setCurrentItem(index);
+                break;
+            }
+        }
+    }
+}
+```
+
+We also need to update *AddresBookFragment*'s *ContactHolder.onClick()* method 
+to use the new intent:
+
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+    private class ContactHolder extends RecyclerView.ViewHolder
+            implements View.OnClickListener{
+        ...
+        @Override
+        public void onClick(View v) {
+            Intent intent = ContactPagerActivity.newIntent(getActivity(),
+                    mContact.getID());
+            startActivity(intent);
+        }
+    }
+    ...
+}
+```
+
+Finally, we need to update the app's manifest, 
+`app/manifests/AndroidManifest.xml` to include the new activity; we can replace 
+*ContactActivity* with *ContactPagerActivity*:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -234,7 +417,7 @@ project view.
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".ContactActivity">
+        <activity android:name=".ContactPagerActivity">
         </activity>
         <activity android:name=".AddressBookActivity">
             <intent-filter>
@@ -247,336 +430,10 @@ project view.
 </manifest>
 ```
 
-Here, we added another **activity** element and moved the **intent-filter** 
-element into the new **activity** element; this tells Android which activity 
-should be used when the app starts. If we start the app now, we'll see 
-the activity with its *FrameLayout* hosting an empty **AddressBookFragment**.
+You should now be able to run the app, choose a contact, and swipe between 
+them.  If the app crashes when pressing a contact, check the `build.gradle` 
+file and make sure that the version of the `com.android.support:support-v4` 
+dependency matches the value of `compileSdkVersion`.  If you have to change 
+the version, be sure to sync gradle and choose **Build -> Clean Project** from 
+the menus.  
 
-## Creating the View
-Now that we've updated the model and started work on updating the controller, 
-let's turn our attention to the view.  What we'd like to do is display a list 
-of contacts in a way that will allow us to scroll through the list if there are 
-more than can be displayed at once on the screen.  To do this, we'll make use 
-of a *RecyclerView*.  The *RecyclerView* is a subclass of *ViewGroup* that 
-displays a list of child *View* objects with each object corresponding to an 
-item in some other list.  For us, the *View* objects will correspond to 
-contacts stored in the *AddressBook* instance.  
-
-Our first implementation will be simple: it will display a list of contact 
-names using *TextView*s. Right now, our *AddressBook* class creates 100 
-contacts but not all of them will be able to be displayed on the screen.  
-Rather than creating 100 *TextView*s when only a fraction will be displayed on 
-screen, *RecyclerView* handles creating just enough *TextView*s and reusing 
-them as we scroll through the list.
-
-The *RecyclerView* is only responsible for recycling its child *View* objects 
-and positioning them on the screen; it does not create the *View* objects 
-or configure them.  In order to do those tasks, we need to use a *ViewHolder* 
-and an *Adapter*.
-
-A *ViewHolder* is responsible for keeping track of a *View* and handles wiring 
-a *View* when the corresponding data changes.  An *Adapter* is responsible for 
-creating *ViewHolder*s and loading data from the model and binding it to a 
-*ViewHolder*.  The *RecyclerView* will use the *Adapter* to create a sufficient 
-number of *ViewHolder* depending on how many can be displayed.  When the time 
-comes to display data (or as the list is scrolled through), the *RecyclerView* 
-will supply a *ViewHolder* to the *Adapter* and the *Adapter* will bind model 
-data to the *View* associated with the *ViewHolder*.  
-
-In order to use a *RecyclerView*, we have to add a dependency to our project.  
-From the menus, choose **File -> Project Structure...**, select the **app** 
-module, then click the **Dependencies** tab.  Click the add button, select 
-**Library** and choose the `com.android.support:recyclerview-v7` library.
-
-We'll place a *RecyclerView* in the *AddressBookFragment* layout but first 
-we have to create that layout file. Right-click the `res/layout` folder and 
-select **New -> Layout resource file"; name it `fragment_address_book` and 
-change the root element to `android.support.v7.widget.RecyclerView`.  Set the 
-ID attribute to `@+id/address_book_recycler_view`. The XML for the new layout 
-should look similar to the following:
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<android.support.v7.widget.RecyclerView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/address_book_recycler_view"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
-</android.support.v7.widget.RecyclerView>
-```
-      
-Now that we've defined the view in the layout file, let's connect the view to 
-the fragment by adding the following code to *AddressBookFragment*:
-
-```java
-public class AddressBookFragment extends Fragment {
-    private RecyclerView mAddressBookRecyclerView;
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_address_book, container,
-                false);
-
-        mAddressBookRecyclerView = 
-                (RecyclerView) view.findViewById(R.id.address_book_recycler_view);
-        mAddressBookRecyclerView.setLayoutManager(
-                new LinearLayoutManager(getActivity()));
-        
-        return view;
-    }
-}
-```
-
-Notice that this is similar to what we did when we created a *ContactFragment*.
-When we create a new *RecyclerView*, we also have to specify a *LayoutManager*. 
-The *LayoutManager* will actually positioning *View*s on the screen and define 
-the scrolling behavior.  Here, we're creating a new *LinearLayoutManager* and 
-setting it as the *LayoutManager*.
-
-If we were to run the app now, we still wouldn't see any of our contacts.  We 
-still have to provide implementations for the *Adapter* and the *ViewHolder*. 
-Because the *ViewHolder* and *Adapter* will be unique to and work closely with 
-the *RecyclerView* in *AddressBookFragment*, we can define them as nested 
-classes.  *ViewHolder* is responsible for keeping track of a *View* so its code 
-can be as simple as the following:
-
-```java
-public class AddressBookFragment extends Fragment {
-    ...
-    private class ContactHolder extends RecyclerView.ViewHolder {
-        public TextView mContactNameTextView;
-        
-        public ContactHolder(View itemView) {
-            super(itemView);
-            mContactNameTextView = (TextView) itemView;
-        }
-    }
-}
-```
-
-The *Adapter* class will be used with *RecyclerView* when a *ViewHolder* 
-has to be created or when the corresponding *View* has to be updated; 
-additionally, the *Adapter* has to be able to provide the total number of 
-items.  In order to do these things, our implementation of *Adapter* has to 
-provide implementations for three methods: *onCreateViewHolder()* when a new 
-*View* is needed to display an item, *onBindViewHolder()* when updating 
-the view, and *getItemCount()* to get the total number of items.
-
-```java
-public class AddressBookFragment extends Fragment {
-    ...
-    private class ContactAdapter extends RecyclerView.Adapter<ContactHolder> {
-        private List<Contact> mContacts;
-        
-        public ContactAdapter(List<Contact> contacts) {
-            mContacts = contacts;
-        }
-        
-        @Override
-        public ContactHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
-            View view = layoutInflater.inflate(
-                    android.R.layout.simple_list_item_1, parent, false);
-            return new ContactHolder(view);
-        }
-
-        @Override
-        public void onBindViewHolder(ContactHolder holder, int position) {
-            Contact contact = mContacts.get(position);
-            holder.mContactNameTextView.setText(contact.getName());
-        }
-
-        @Override
-        public int getItemCount() {
-            return mContacts.size();
-        }
-    }
-} 
-```
-
-The constructor for *ContactAdapter* will require a list of contacts that we'll 
-use when the *onBindViewHolder()* and *getItemCount()* methods are called. In 
-*onCreateViewHolder()*, notice that we use 
-`android.R.layout.simple_list_item_1` as the layout to be inflated; this comes 
-from the Android standard library.
-
-Next, we have to connect *ContactActivity* and the *RecyclerView*.  To do 
-this, we'll add a method to *AddressBookFragment* that creates an instance 
-of *AddressBook*, uses it to create an instance of *ContactAdapter*, and 
-calls the *RecyclerView*'s *setAdapter()* method.  We'll call this new method 
-before returning **view** in *onCreateView()*.
-
-```java
-public class AddressBookFragment extends Fragment {
-    private RecyclerView mAddressBookRecyclerView;
-    private ContactAdapter mContactAdapter;
-    
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_address_book, container,
-                false);
-
-        mAddressBookRecyclerView = (RecyclerView) view.findViewById(
-                R.id.address_book_recycler_view);
-        mAddressBookRecyclerView.setLayoutManager(
-                new LinearLayoutManager(getActivity()));
-
-        updateUI();
-        
-        return view;
-    }
-    
-    private void updateUI() {
-        AddressBook addressBook = AddressBook.get();
-        List<Contact> contacts = addressBook.getContacts();
-        mContactAdapter = new ContactAdapter(contacts);
-        mAddressBookRecyclerView.setAdapter(mContactAdapter);
-    }
-...
-}
-```
-
-If we run our app and scroll, we should see something like this:
-
-![Address Book](images/addressbook.png)
-
-Finally, we can add support for pressing items.  To do this, let's update 
-*ContactHolder* to be the **OnClickListener** for its associated view.  When 
-an item is pressed, we'd like it to display a message containing the contact's 
-name.  Right now, we directly set the the text displayed by the view in 
-*ContactAdapter* by working directly with a *ContactHolder* field.  Let's 
-rework this so that the *ContactActivity* has to call a method on 
-*ContactHolder* that takes a *Contact* and sets the text.  
-
-Here's what *ContactHolder* looks like now:
-
-```java
-public class AddressBookFragment extends Fragment {
-    ...
-    private class ContactHolder extends RecyclerView.ViewHolder
-            implements View.OnClickListener{
-        private TextView mContactNameTextView;
-        private Contact mContact;
-
-        public ContactHolder(View itemView) {
-            super(itemView);
-            itemView.setOnClickListener(this);
-            mContactNameTextView = (TextView) itemView;
-        }
-
-        public void bindContact(Contact contact) {
-            mContact = contact;
-            mContactNameTextView.setText(contact.getName());
-        }
-
-        @Override
-        public void onClick(View v) {
-            Toast.makeText(getActivity(), mContact.getName() + " clicked.", 
-                    Toast.LENGTH_SHORT).show();
-        }
-    }
-    ...
-}
-```
-
-We can now replace the code in *ContactAdapter* that works with 
-*mContactNameTextView* with code tha calls the new *bindContact()* method:
-
-```java
-public class AddressBookFragment extends Fragment {
-    ...
-    private class ContactAdapter extends RecyclerView.Adapter<ContactHolder> {
-        ...
-        @Override
-        public void onBindViewHolder(ContactHolder holder, int position) {
-            Contact contact = mContacts.get(position);
-            holder.bindContact(contact);
-        }
-        ...
-    }
-}
-```
-
-The entire `AddressBook.java` file should now look similar to this:
-
-```java
-public class AddressBookFragment extends Fragment {
-    private RecyclerView mAddressBookRecyclerView;
-    private ContactAdapter mContactAdapter;
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_address_book, container,
-                false);
-
-        mAddressBookRecyclerView = (RecyclerView) view.findViewById(
-                R.id.address_book_recycler_view);
-        mAddressBookRecyclerView.setLayoutManager(
-                new LinearLayoutManager(getActivity()));
-
-        updateUI();
-
-        return view;
-    }
-
-    private void updateUI() {
-        AddressBook addressBook = AddressBook.get();
-        List<Contact> contacts = addressBook.getContacts();
-        mContactAdapter = new ContactAdapter(contacts);
-        mAddressBookRecyclerView.setAdapter(mContactAdapter);
-    }
-
-    private class ContactHolder extends RecyclerView.ViewHolder
-            implements View.OnClickListener{
-        private TextView mContactNameTextView;
-        private Contact mContact;
-
-        public ContactHolder(View itemView) {
-            super(itemView);
-            itemView.setOnClickListener(this);
-            mContactNameTextView = (TextView) itemView;
-        }
-
-        public void bindContact(Contact contact) {
-            mContact = contact;
-            mContactNameTextView.setText(contact.getName());
-        }
-
-        @Override
-        public void onClick(View v) {
-            Toast.makeText(getActivity(), mContact.getName() + " clicked.",
-                    Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private class ContactAdapter extends RecyclerView.Adapter<ContactHolder> {
-        private List<Contact> mContacts;
-
-        public ContactAdapter(List<Contact> contacts) {
-            mContacts = contacts;
-        }
-
-        @Override
-        public ContactHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
-            View view = layoutInflater.inflate(
-                    android.R.layout.simple_list_item_1, parent, false);
-            return new ContactHolder(view);
-        }
-
-        @Override
-        public void onBindViewHolder(ContactHolder holder, int position) {
-            Contact contact = mContacts.get(position);
-            holder.bindContact(contact);
-        }
-
-        @Override
-        public int getItemCount() {
-            return mContacts.size();
-        }
-    }
-}
-```

@@ -1,264 +1,582 @@
-# Week 6 - Layouts and Widgets
+# Week 6 - Views and Adapters
 
 ## Corresponding Text
-*Android Programming*, pp. 149-166
+*Android Programming*, pp. 167-191
 
-## Adding Widgets and Updating Layouts
-Let's start by adding some additional functionality to our app.  Eventually, 
-we'll be able to view a list of contacts and it might be helpful to select 
-some contacts as "favorites" and view only favorite contacts.  To enable the 
-user to designate a contact as a favorite, we'll add a widget to the contact 
-fragment layout, update the *Contact* class, and wire the new widget to 
-make changes to the corresponding *Contact* instance when the widget's state 
-changes.  
+## Creating a List of Items
+Ultimately, we'd like to be able to create contacts, view a list of our 
+contacts, and select a contact from the list to view it's details.  Right now, 
+we have part of what's needed when viewing an existing contact or creating a 
+new one.  As a next step, we'll focus on how we can list a collection of 
+contacts.
 
-To begin, let's add a string resource to the `string.xml` resource file:
-
-```xml
-<string name="favorite">Favorite</string>
-```
-
-Next, let's add a *CheckBox* widget to the contact fragment layout.  We can 
-add it after the email *EditText* in the existing *LinearLayout* by dragging 
-and dropping the widget onto the preview of the layout and settting the 
-following properties:
-
-| Property | Value            |
-|----------|------------------|
-| ID       | contact_favorite |
-| text     | @string/favorite |
-
-While we're modifying the layout, set the following properties on the other 
-widgets:
-
-| Widget           | Property  | Value            |
-|------------------|-----------|------------------|
-| Name *EditText*  | inputType | textPersonName   |
-| Email *EditText* | inputType | textEmailAddress |
-
-Choosing the appropriate input type will affect which keyboard is displayed 
-on screen, suggestions provided, and how input will be displayed (masked when 
-passwords are entered, for example).
-
-We'll examine the layout further later but for now, it should resemble this:
-
-![layout](images/initial-layout.png)
-
-The XML for the layout should be similar to the following
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent">
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/contact_name"
-        android:hint="@string/name_hint"
-        android:padding="20dp"
-        android:inputType="textPersonName"/>
-
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/contact_email"
-        android:hint="@string/email_hint"
-        android:padding="20dp"
-        android:inputType="textEmailAddress"/>
-
-    <CheckBox
-        android:text="@string/favorite"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/contact_favorite"/>
-</LinearLayout>
-```
-
-To support designating a contact as a favorite, we'll have to update the 
-*Contact* class to track this information.  We can do this by adding a 
-private boolean field and the corresponding getter and setter.
+### Updating the Model
+As a first step, we'll need to update our model to include a means of storing 
+a collection of *Contact* object, something like an address book.  Because 
+we will only every need one instance of this new class, we'll create a 
+singleton.  A **singleton** class has at most one instance.  In order to 
+create a singleton, we'll create class and make its constructor private; this 
+will prevent other objects from creating instances of the class.  So how can 
+we create one instance of a class with a private constructor?  Because the 
+constructor is private, only methods belonging to the class can use it.  We can 
+create a method that checks to see if an instance exists and returns the 
+existing instance if it exists or creates it and returns it if the instance 
+does not exist.  Let's call the class *AddressBook*.  Here's the necessary code 
+to make *AddressBook* a singleton.
 
 ```java
-public class Contact {
+public class AddressBook {
+    private static AddressBook sAddressBook;
 
-    ...
-
-    private boolean mIsFavorite;
-
-    ...
-
-    public boolean isFavorite() {
-        return mIsFavorite;
+    private AddressBook() {
     }
 
-    public void setFavorite(boolean favorite) {
-        mIsFavorite = favorite;
+    public static AddressBook get() {
+        if (sAddressBook == null) {
+            sAddressBook = new AddressBook();
+        }
+        return sAddressBook;
     }
 
 }
 ```
 
-In the code above, the ellipses, `...`, represent additional code left out 
-for brevity.
+Here, the *AddressBook* class has a static field to store an instance of the 
+class and a public, static method named *get()* that will return an instance of 
+the class, creating it if necessary.  It's important that the field and method 
+be static since we won't have an instance to begin with.
 
-Now we can add code that will toggle a contact's state of being a favorite 
-based on the state of the widget we added earlier.  In the *ContactFragment* 
-class, we can add a field to represent the favorite *CheckBox* and set an 
-*OnCheckedChangeListener* to update the the contact's favorite status.
+Now that we've made sure we can have at most one *AddressBook*, let's add the 
+functionality required to store contacts.  Recall that one of the fields on the 
+*Contact* class involved an ID; we'll add functionality to *AddressBook* to 
+find a contact using it's ID.
 
 ```java
-public class ContactFragment extends Fragment {
+public class AddressBook {
+    private static AddressBook sAddressBook;
+    private List<Contact> mContacts;
 
-    ...
+    private AddressBook() {
+        mContacts = new ArrayList<>();
+    }
 
-    private CheckBox mFavoriteCheckBox;
+    public static AddressBook get() {
+        if (sAddressBook == null) {
+            sAddressBook = new AddressBook();
+        }
+        return sAddressBook;
+    }
+
+    public List<Contact> getContacts() {
+        return mContacts;
+    }
+
+    public Contact getContact(UUID id) {
+        for (Contact contact: mContacts) {
+            if (contact.getID().equals(id)) {
+                return contact;
+            }
+        }
+        return null;
+    }
+}
+```
+
+We've added a private field *mContacts* to store a *List* of *Contact* 
+instances and assigned a new *ArrayList* to it in the private constructor. 
+We've also added two public methods: one to return all the stored contacts and 
+one to search for contacts based on a specified ID.
+
+Eventually, we'll add functionality for the user to create new contacts and 
+these will be added to the list of contacts but for now, let's pre-populate 
+the list with some made-up contacts.  We can do this by adding code to the 
+constructor:
+
+```java
+    private AddressBook() {
+        mContacts = new ArrayList<>();
+        for (int i=0; i<100; i++) {
+            Contact contact = new Contact();
+            contact.setName("Person " + i);
+            contact.setEmail("Person" + i + "@email.com");
+            
+            // set every 10th as a favorite
+            if (i % 10 == 0) {
+                contact.setFavorite(true);
+            }
+            
+            mContacts.add(contact);
+        }
+
+    }
+```  
+This will create contacts with names like "Person 1", email addresses like 
+"Person1@email.com", and every 10<sup>th</sup> contact marked as a favorite.
+
+### Updating the Controller
+We will create a fragment to display our list of contacts.  Just like before 
+when we created a fragment to display contact information, we had to first 
+create an activity to host the fragment.  If we look at the XML defining 
+`activity_contact.xml`, we can see that it doesn't make use of any particular 
+fragment:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:id="@+id/fragment_container"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent">
+</FrameLayout>
+```
+
+We can actually reuse this activity to host a new fragment we create. 
+Right-click on `activity_contact.xml` in the **Project** view and select 
+**Refactor -> Rename**; enter `activity_fragment.xml` as the new name.  Our 
+code in the *ContactActivity* class should have automatically updated to use 
+the fragment's new name.  
+
+Looking at the code for the *ContactActivity* class, we can see that if we 
+wanted to create a new activity to host a single fragment, we could reuse most 
+of the code.  The exception is that code that creates an instance of 
+*ContactFragment*:
+
+```java
+fragment = new ContactFragment();
+```
+
+Rather than copying and repeating most of this code for a new activity, it 
+would be nice if we could create a class from which *ContactActivity* and the 
+new activity class we will create could inherit from.  One way we can do this 
+is by creating an abstract class with the same code that *ContactActivity* 
+currently has but replaces `new ContactFragment()` with a call to method that 
+creates a fragment.  If we make this new method abstract in the base class, we 
+can force any class that extends the base class to implement the method.  
+
+Let's create a new abstract class named `SingleFragmentActivity`; its code will 
+be similar to the code already in *ContactActivity*:
+
+```java
+public abstract class SingleFragmentActivity extends FragmentActivity{
+    public String getPackage(Context context) {
+        return context.getPackageName();
+    }
+
+    protected abstract Fragment createFragment();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_fragment);
+
+        FragmentManager fm = getSupportFragmentManager();
+        Fragment fragment = fm.findFragmentById(R.id.fragment_container);
+
+        if (fragment==null) {
+            fragment = createFragment();
+            fm.beginTransaction()
+                    .add(R.id.fragment_container, fragment)
+                    .commit();
+        }
+
+    }
+}
+```
+
+This new abstract class declares an abstract method, *createFragment()*, that 
+will return an instance of the *Fragment* class.  Additionally, the 
+*onCreate()* method now calls the *createFragment()* method to assign a value 
+to the *fragment* field.  We can now rewrite *ContactActivity* to extend this 
+abstract class:
+
+```java
+public class ContactActivity extends SingleFragmentActivity {
+    @Override
+    protected Fragment createFragment() {
+        return new ContactFragment();
+    }
+}
+```
+
+Next, we can create the controller classes that will work with the fragment 
+used to display a list of contacts.  Let's create two classes: 
+*AddressBookFragment* and *AddressBookActivity*. Right now, we won't add any 
+code to the *AddressBookFragment* class:
+
+```java
+public class AddressBookFragment extends Fragment {
+}
+```
+
+*AddressBookActivity* will look similar to *ContactActivity* but the 
+*createFragment()* will create an instance of *AddressBookFragment*:
+
+```java
+public class AddressBookActivity extends SingleFragmentActivity {
+    @Override
+    protected Fragment createFragment() {
+        return new AddressBookFragment();
+    }
+}
+```
+
+In order to use the activity in our app, we have to declare it in the 
+application's manifest located in the `app/manifests` folder in the Android 
+project view. 
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.arthurneuman.mycontacts">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <activity android:name=".ContactActivity">
+        </activity>
+        <activity android:name=".AddressBookActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+```
+
+Here, we added another **activity** element and moved the **intent-filter** 
+element into the new **activity** element; this tells Android which activity 
+should be used when the app starts. If we start the app now, we'll see 
+the activity with its *FrameLayout* hosting an empty **AddressBookFragment**.
+
+## Creating the View
+Now that we've updated the model and started work on updating the controller, 
+let's turn our attention to the view.  What we'd like to do is display a list 
+of contacts in a way that will allow us to scroll through the list if there are 
+more than can be displayed at once on the screen.  To do this, we'll make use 
+of a *RecyclerView*.  The *RecyclerView* is a subclass of *ViewGroup* that 
+displays a list of child *View* objects with each object corresponding to an 
+item in some other list.  For us, the *View* objects will correspond to 
+contacts stored in the *AddressBook* instance.  
+
+Our first implementation will be simple: it will display a list of contact 
+names using *TextView*s. Right now, our *AddressBook* class creates 100 
+contacts but not all of them will be able to be displayed on the screen.  
+Rather than creating 100 *TextView*s when only a fraction will be displayed on 
+screen, *RecyclerView* handles creating just enough *TextView*s and reusing 
+them as we scroll through the list.
+
+The *RecyclerView* is only responsible for recycling its child *View* objects 
+and positioning them on the screen; it does not create the *View* objects 
+or configure them.  In order to do those tasks, we need to use a *ViewHolder* 
+and an *Adapter*.
+
+A *ViewHolder* is responsible for keeping track of a *View* and handles wiring 
+a *View* when the corresponding data changes.  An *Adapter* is responsible for 
+creating *ViewHolder*s and loading data from the model and binding it to a 
+*ViewHolder*.  The *RecyclerView* will use the *Adapter* to create a sufficient 
+number of *ViewHolder* depending on how many can be displayed.  When the time 
+comes to display data (or as the list is scrolled through), the *RecyclerView* 
+will supply a *ViewHolder* to the *Adapter* and the *Adapter* will bind model 
+data to the *View* associated with the *ViewHolder*.  
+
+In order to use a *RecyclerView*, we have to add a dependency to our project.  
+From the menus, choose **File -> Project Structure...**, select the **app** 
+module, then click the **Dependencies** tab.  Click the add button, select 
+**Library** and choose the `com.android.support:recyclerview-v7` library.
+
+We'll place a *RecyclerView* in the *AddressBookFragment* layout but first 
+we have to create that layout file. Right-click the `res/layout` folder and 
+select **New -> Layout resource file"; name it `fragment_address_book` and 
+change the root element to `android.support.v7.widget.RecyclerView`.  Set the 
+ID attribute to `@+id/address_book_recycler_view`. The XML for the new layout 
+should look similar to the following:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.RecyclerView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/address_book_recycler_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+</android.support.v7.widget.RecyclerView>
+```
+      
+Now that we've defined the view in the layout file, let's connect the view to 
+the fragment by adding the following code to *AddressBookFragment*:
+
+```java
+public class AddressBookFragment extends Fragment {
+    private RecyclerView mAddressBookRecyclerView;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.fragment_contact, container, false);
+        View view = inflater.inflate(R.layout.fragment_address_book, container,
+                false);
 
-        ...
-
-        mFavoriteCheckBox = (CheckBox)v.findViewById(R.id.contact_favorite);
-        mFavoriteCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mContact.setFavorite(isChecked);
-            }
-        });
-
-        return v;
+        mAddressBookRecyclerView = 
+                (RecyclerView) view.findViewById(R.id.address_book_recycler_view);
+        mAddressBookRecyclerView.setLayoutManager(
+                new LinearLayoutManager(getActivity()));
+        
+        return view;
     }
 }
 ```
 
-## Layout Attributes
-### Styles and Themes
-Now that we've added a widget and code to do something when the widget is used, 
-let's return to our layout `fragment_contact.xml`.  For each widget defined 
-in the layout, there are some attributes worth noting beyond what we've made 
-use of so far.
+Notice that this is similar to what we did when we created a *ContactFragment*.
+When we create a new *RecyclerView*, we also have to specify a *LayoutManager*. 
+The *LayoutManager* will actually positioning *View*s on the screen and define 
+the scrolling behavior.  Here, we're creating a new *LinearLayoutManager* and 
+setting it as the *LayoutManager*.
 
-A *style* is a resource that contains attributes defining the appearance and 
-behavior of a widget.  Styles, like layouts, are specified using XML.  For 
-example, the following defines a style named **BigBoldStyle**. 
+If we were to run the app now, we still wouldn't see any of our contacts.  We 
+still have to provide implementations for the *Adapter* and the *ViewHolder*. 
+Because the *ViewHolder* and *Adapter* will be unique to and work closely with 
+the *RecyclerView* in *AddressBookFragment*, we can define them as nested 
+classes.  *ViewHolder* is responsible for keeping track of a *View* so its code 
+can be as simple as the following:
 
-```xml
-    <style name="BigBoldStyle">
-        <item name="android:textSize">20sp</item>
-        <item name="android:textStyle">bold</item>
-    </style>
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+    private class ContactHolder extends RecyclerView.ViewHolder {
+        public TextView mContactNameTextView;
+        
+        public ContactHolder(View itemView) {
+            super(itemView);
+            mContactNameTextView = (TextView) itemView;
+        }
+    }
+}
 ```
 
-We can define styles in `res/values/styles.xml`.  Be careful when specifying 
-attribute names - they are case sensitive.
+The *Adapter* class will be used with *RecyclerView* when a *ViewHolder* 
+has to be created or when the corresponding *View* has to be updated; 
+additionally, the *Adapter* has to be able to provide the total number of 
+items.  In order to do these things, our implementation of *Adapter* has to 
+provide implementations for three methods: *onCreateViewHolder()* when a new 
+*View* is needed to display an item, *onBindViewHolder()* when updating 
+the view, and *getItemCount()* to get the total number of items.
 
-We can use the style by setting a widget's property or by specifying it in 
-the resource XML like this:
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+    private class ContactAdapter extends RecyclerView.Adapter<ContactHolder> {
+        private List<Contact> mContacts;
+        
+        public ContactAdapter(List<Contact> contacts) {
+            mContacts = contacts;
+        }
+        
+        @Override
+        public ContactHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
+            View view = layoutInflater.inflate(
+                    android.R.layout.simple_list_item_1, parent, false);
+            return new ContactHolder(view);
+        }
 
-```xml
- <EditText style="@style/BigBoldStyle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/contact_name"
-        android:hint="@string/name_hint"
-        android:padding="20dp"
-        android:inputType="textPersonName"/>
+        @Override
+        public void onBindViewHolder(ContactHolder holder, int position) {
+            Contact contact = mContacts.get(position);
+            holder.mContactNameTextView.setText(contact.getName());
+        }
+
+        @Override
+        public int getItemCount() {
+            return mContacts.size();
+        }
+    }
+} 
 ```
 
-Compare the text in the *EditText* widgets before and after changing the style.
+The constructor for *ContactAdapter* will require a list of contacts that we'll 
+use when the *onBindViewHolder()* and *getItemCount()* methods are called. In 
+*onCreateViewHolder()*, notice that we use 
+`android.R.layout.simple_list_item_1` as the layout to be inflated; this comes 
+from the Android standard library.
 
-![layout](images/style.png)
+Next, we have to connect *ContactActivity* and the *RecyclerView*.  To do 
+this, we'll add a method to *AddressBookFragment* that creates an instance 
+of *AddressBook*, uses it to create an instance of *ContactAdapter*, and 
+calls the *RecyclerView*'s *setAdapter()* method.  We'll call this new method 
+before returning **view** in *onCreateView()*.
 
-A **theme** is a collection of styles.  Like a style, a theme can be specified 
-in the `styles.xml` file.
+```java
+public class AddressBookFragment extends Fragment {
+    private RecyclerView mAddressBookRecyclerView;
+    private ContactAdapter mContactAdapter;
+    
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_address_book, container,
+                false);
 
-### Layout Parameters
-If we look at the XML representing the layout of our fragment, we can see that 
-some of the attributes have names that begin with `layout_`.  Parameters that 
-do not start with `layout_` provide configuration information about the widget 
-itself when the view is inflated.  Parameters that do begin with `layout_` 
-provide information to the widget's parent about how to arrange the widget 
-within the parent.   
+        mAddressBookRecyclerView = (RecyclerView) view.findViewById(
+                R.id.address_book_recycler_view);
+        mAddressBookRecyclerView.setLayoutManager(
+                new LinearLayoutManager(getActivity()));
 
-Two commonly confused attributes are margins and padding.  Margin attributes 
-are layout parameters: they are used to determine the distance between widgets.
-Because one widget is not responsible for the placement of a second widget 
-(unless the first is the parent of the second), it is up to the parent to make 
-use of the margin information when placing widgets.  
+        updateUI();
+        
+        return view;
+    }
+    
+    private void updateUI() {
+        AddressBook addressBook = AddressBook.get();
+        List<Contact> contacts = addressBook.getContacts();
+        mContactAdapter = new ContactAdapter(contacts);
+        mAddressBookRecyclerView.setAdapter(mContactAdapter);
+    }
+...
+}
+```
 
-Padding is not a layout parameter, it defines how much larger than its content 
-a widget should be.  To demonstrate the difference, let's change the 
-*background* attributes of the two *EditText* widgets we have:
+If we run our app and scroll, we should see something like this:
 
-```xml
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/contact_name"
-        android:hint="@string/name_hint"
-        android:padding="20dp"
-        android:inputType="textPersonName"
-        android:background="@android:color/holo_orange_dark"/>
+![Address Book](images/addressbook.png)
 
+Finally, we can add support for pressing items.  To do this, let's update 
+*ContactHolder* to be the **OnClickListener** for its associated view.  When 
+an item is pressed, we'd like it to display a message containing the contact's 
+name.  Right now, we directly set the the text displayed by the view in 
+*ContactAdapter* by working directly with a *ContactHolder* field.  Let's 
+rework this so that the *ContactActivity* has to call a method on 
+*ContactHolder* that takes a *Contact* and sets the text.  
 
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/contact_email"
-        android:hint="@string/email_hint"
-        android:padding="20dp"
-        android:inputType="textEmailAddress"
-        android:background="@android:color/holo_blue_bright"/>
-``` 
+Here's what *ContactHolder* looks like now:
 
-Next, let's double the padding from the default value of `20dp` to `40dp`. 
-Notice that the entire widget increased in size (and the text move further 
-toward the center).  The space between the widget's content and its edges 
-increased when we increased the padding.  
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+    private class ContactHolder extends RecyclerView.ViewHolder
+            implements View.OnClickListener{
+        private TextView mContactNameTextView;
+        private Contact mContact;
 
-Let's reset the padding to `20dp` and add `android:layout_margin="20dp"` to 
-both widgets.  Notice now that rather than the widgets increasing in size, the 
-space between each widget and other widgets (and the edges of the parent) 
-increased.  The parent layout used the new layout parameter to change the 
-placement of the widget.
+        public ContactHolder(View itemView) {
+            super(itemView);
+            itemView.setOnClickListener(this);
+            mContactNameTextView = (TextView) itemView;
+        }
 
-![padding-margins](images/padding-margins.png)
+        public void bindContact(Contact contact) {
+            mContact = contact;
+            mContactNameTextView.setText(contact.getName());
+        }
 
-Be sure to revert changes to margins, padding, and the background.
+        @Override
+        public void onClick(View v) {
+            Toast.makeText(getActivity(), mContact.getName() + " clicked.", 
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+    ...
+}
+```
 
-Another layout parameter that we might have to work with is `layout_weight`. 
-When working with linear layouts, the layout makes two passes to examine a 
-widget's layout parameters to place it and other widgets.  First, the layout 
-will look at the widget's height (if the layout is a vertical layout) or the 
-widget's width (if the layout is a horizontal layout).  In the second pass, 
-the layout will examine the `layout_weight` attribute to allocate any extra 
-space.  If we add `android:layout_weight="1"` to the two *EditText* widgets, we 
-can see that the layout allocates enough space for each of the widgets then 
-allocates extra space to widgets with the weight attributes.
+We can now replace the code in *ContactAdapter* that works with 
+*mContactNameTextView* with code tha calls the new *bindContact()* method:
 
-![weight-1](images/weight-1.png)
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+    private class ContactAdapter extends RecyclerView.Adapter<ContactHolder> {
+        ...
+        @Override
+        public void onBindViewHolder(ContactHolder holder, int position) {
+            Contact contact = mContacts.get(position);
+            holder.bindContact(contact);
+        }
+        ...
+    }
+}
+```
 
-If we double the weight for the first *EditText* widget, we can see that the 
-first *EditText* widget has twice the height of the second one - it's been 
-allocated twice the extra space than the second *EditText* widget.
+The entire `AddressBook.java` file should now look similar to this:
 
-![weight-2](images/weight-2.png)
+```java
+public class AddressBookFragment extends Fragment {
+    private RecyclerView mAddressBookRecyclerView;
+    private ContactAdapter mContactAdapter;
 
-For now, we'll remove the specifications for the `layout_weight` attributes.
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_address_book, container,
+                false);
 
-### Screen Pixel Densities
-When we modified padding of our widgets, you might have noticed that units were 
-`dp`.  Because Android runs on many devices with difference screen sizes, 
-Android provides a method of specifying sizes in a way that should produce 
-similar results across all devices.  We make use of this with 
-device-independent dimension units.  We can specify sizes in one of three ways:
+        mAddressBookRecyclerView = (RecyclerView) view.findViewById(
+                R.id.address_book_recycler_view);
+        mAddressBookRecyclerView.setLayoutManager(
+                new LinearLayoutManager(getActivity()));
 
-| Unit       | Description                                                                                                                                                                                                                                   |
-|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| dp         | Density-independent pixel - typically used for margins and padding.  For higher-density displays, a density-independent pixel will expand to fill a lager number of pixels.  By definition 1 dp = 1/160th of an inch on the device's screen.  |
-| sp         | Scale-independent pixel - typically used for text size.  These are density-independent pixels that also take a user's font size preference into account.                                                                                      |
-| pt, mm, in | Scaled units representing points (1/72nd of an inch), millimeters, and inches.  Many devices are not configured to properly scale items specified with these units so they should be avoided in favor of `dp` or `sp`.                        |
+        updateUI();
+
+        return view;
+    }
+
+    private void updateUI() {
+        AddressBook addressBook = AddressBook.get();
+        List<Contact> contacts = addressBook.getContacts();
+        mContactAdapter = new ContactAdapter(contacts);
+        mAddressBookRecyclerView.setAdapter(mContactAdapter);
+    }
+
+    private class ContactHolder extends RecyclerView.ViewHolder
+            implements View.OnClickListener{
+        private TextView mContactNameTextView;
+        private Contact mContact;
+
+        public ContactHolder(View itemView) {
+            super(itemView);
+            itemView.setOnClickListener(this);
+            mContactNameTextView = (TextView) itemView;
+        }
+
+        public void bindContact(Contact contact) {
+            mContact = contact;
+            mContactNameTextView.setText(contact.getName());
+        }
+
+        @Override
+        public void onClick(View v) {
+            Toast.makeText(getActivity(), mContact.getName() + " clicked.",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private class ContactAdapter extends RecyclerView.Adapter<ContactHolder> {
+        private List<Contact> mContacts;
+
+        public ContactAdapter(List<Contact> contacts) {
+            mContacts = contacts;
+        }
+
+        @Override
+        public ContactHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
+            View view = layoutInflater.inflate(
+                    android.R.layout.simple_list_item_1, parent, false);
+            return new ContactHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(ContactHolder holder, int position) {
+            Contact contact = mContacts.get(position);
+            holder.bindContact(contact);
+        }
+
+        @Override
+        public int getItemCount() {
+            return mContacts.size();
+        }
+    }
+}
+```

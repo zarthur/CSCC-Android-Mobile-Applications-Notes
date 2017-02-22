@@ -1,410 +1,323 @@
-# Week 8 - Fragment Arguments and ViewPager
+# Week 8 - The Toolbar, Menus, and Navigation
 
 ## Corresponding Text
-*Android Programming*, pp. 193-212
+*Android Programming*, pp. 235-254
 
-## Starting an Activity from a Fragment
-Now that we have the ability to list all our contacts as well as a way of 
-displaying contact details, it would be nice if we could view the details 
-of a specific contact by selecting it from our list.  We'll look at two ways 
-of accomplishing this: by using extras and by using fragment arguments. 
+## The AppCompat Library
+We're going to be working with the toolbar.  The toolbar provides a means of 
+providing the user with actions, an additional way of navigating through the 
+app, and a way of consistently branding the app.  The toolbar was added to 
+Android in version 5.0; prior to this, app made us of an action bar.  The 
+toolbar builds on the action bar but is more flexible.  Android version 5.0 
+corresponds to SDK version 21; since our app support SDK version 19, we won't 
+be able to use the native tool bar from the Android library.  Instead, we can 
+use a back-ported version from the AppCompat library.  We'll have to make 
+a few changes to our app to make use of the AppCompat library and the toolbar 
+provided by it.
 
-### Using an Intent Extra
-Previously, we looked at a way of using intent extras to start an activity from 
-another activity; starting an activity from a fragment works in a similar way.
+First, let's add the AppCompat library as a dependency of our app.  In Android 
+Studio, select **File -> Project Structure...** from the menus.  With **app**
+selected, click the **Dependencies** tab.  Click the **+** button and 
+**Add Library dependency**. Search for `com.android.support:appcompat-v7`.
+ Click **OK** to close the **Project Structure** dialog.
 
-To start, let's modify the behavior of the app when a list item is pressed.  
-Previously, we defined the behavior in *ContactHolder.onClick()* in 
-`AddressBookFragment.java`.  We were creating a toast to indicate that an item 
-was pressed - let's replace that.  
+Next, we need to make sure the app is using one of the AppCompat theme's.  Open 
+`app/manifests/AndroidManifest.xml` and note the value of the *android:theme* 
+attribute: `@style/AppTheme`.  The theme is defined in `res/values/styles.xml`. 
+The file should contain something like this:
 
-```java
-public class AddressBookFragment extends Fragment {
-    ...
-    private class ContactHolder extends RecyclerView.ViewHolder
-            implements View.OnClickListener{
-        ...
-        @Override
-        public void onClick(View v) {
-            Intent intent = new Intent(getActivity(), ContactActivity.class);
-            startActivity(intent);
-        }
-    }
-    ...
-}
+```xml
+ <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+ ```
+
+ If it doesn't, change the parent attribute so it matches the value above.
+
+ Finally, we have to update all our activities to extend *AppCompatActivity*. 
+ So far, all our activities have extended *FragmentActivity* or a subclass of 
+ *FragmentActivity*.  We won't lose any functionality by extending 
+ *AppCompatActivity* instead of *FragmentActivity* because *AppCompatActivity* 
+ itself extends *FragmentActivity*.  For our app, we'll need to update 
+ *ContactPagerActivity* and *SingleFragmentActivity* to extend 
+ *AppCompatActivity*.  We don't need to make any changes to *ContactActivity* 
+ or *AddressBookActivity* since they extend *SingleFragmentActivity*. 
+
+ At this point, we can run the app.  The only difference is the new toolbar at 
+ the top of our app.      
+
+
+## Menus
+The right area of the toolbar is reserved for the menu.  A menu consists of 
+action items that can perform an action on the current screen or on the 
+app as a while.  We'll create actions to create a contact and to display 
+favorites or all contacts.  We'll need some string resources for use with the 
+menu; add these to `res/values/strings.xml`:
+
+```xml
+    <string name="new_contact">New Contact</string>
+    <string name="show_favorites">Show Favorites</string>
+    <string name="show_all">Show All</string>
 ```
 
-When a list item is pressed, we'll create an *Intent* using the *Activity* 
-returned by the *getActivity()* method inherited from *Fragment* and by 
-specifying the class of the activity to start.  If we run the app now and 
-tap on one of the listed contacts, we'll see that a blank *ContactFragment* is 
-loaded.  We need to be able to indicated to the *ContactFragment* which item 
-was tapped.  One way we can do this by adding an extra to the *Intent* that is 
-used to start the new activity.  Recall that intent extras rely on name/value 
-pairs so we'll need a unique name for any data we want to include as an extra.
-Because we'll be using the intent to start the *ContactActivity* activity and 
-because it will need to make use of the data in the intent extra, let's add 
-a class method that can be used to create an intent for starting 
-*ContactActivity* and that stores the ID of a contact.
+Menus, like layouts, are a type of resource file.  To add a new menu resource 
+file, right click on the project's `res` folder and select 
+**New -> Android resource file**.  Name the file `fragment_address_book` (since 
+we'll be using it with the address book fragment) and set **Resource type** to 
+*Menu* 
 
-```java
-public class ContactActivity extends SingleFragmentActivity {
-    public static final String EXTRA_CONTACT_ID =
-            "com.arthurneuman.mycontacts.contact_id";
+Using the **Design** view, drag a *Menu Item* and drop it on the toolbar; set 
+its **id** to `menu_item_create_contact` and its **title** to 
+`@string/new_contact`. Drag another *Menu Item* below the previous one and set 
+its **id** to `menu_item_toggle_favorites` and its **title** to 
+`@string/show_favorites`.  The XML for the menu resource file should look 
+like this:
 
-    public static Intent newIntent(Context packageContext, UUID contactID) {
-        Intent intent = new Intent(packageContext, ContactActivity.class);
-        intent.putExtra(EXTRA_CONTACT_ID, contactID);
-        return intent;
-    }
-    
-    @Override
-    protected Fragment createFragment() {
-        return new ContactFragment();
-    }
-}
-```
-
-We can now use this method in *ContactHolder.onClick()*:
-
-```java
-public class AddressBookFragment extends Fragment {
-    ...
-    private class ContactHolder extends RecyclerView.ViewHolder
-            implements View.OnClickListener{
-       ...
-        @Override
-        public void onClick(View v) {
-            Intent intent = ContactActivity.newIntent(getActivity(), 
-                    mContact.getID());
-            startActivity(intent);
-        }
-    }
-    ...
-}
-```
-
-This will start the new activity with the ID of the contact that was pressed.  
-Next, we need to make use of the ID included with the *Intent* to load the 
-appropriate contact and update the view.  First, we can use the ID to load 
-the associated contact; in `ContactFragment.java`, modify the *onCreate()* 
-method:
-
-```java
-public class ContactFragment extends Fragment {
-    ...
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        UUID contactID = (UUID) getActivity().getIntent()
-                .getSerializableExtra(ContactActivity.EXTRA_CONTACT_ID);
-        mContact = AddressBook.get().getContact(contactID);
-    }
-    ...
-}
-```
-
-First we get the *Activity* that loaded the *ContactFragment*, then get the 
-*Intent* and extra from it.  Now that we have a *Contact*, we'll need to update 
-the view to include it's data:
-
-```java
-public class ContactFragment extends Fragment {
-    ...
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        ...
-        mNameField = (EditText)v.findViewById(R.id.contact_name);
-        mNameField.setText(mContact.getName());
-        ...
-        mEmailField = (EditText)v.findViewById(R.id.contact_email);
-        mEmailField.setText(mContact.getEmail());
-        ...
-        mFavoriteCheckBox = (CheckBox)v.findViewById(R.id.contact_favorite);
-        mFavoriteCheckBox.setChecked(mContact.isFavorite());
-        ...
-    }
-}
-```
-
-If we run the app now, we should be able to tap on individual contacts and view 
-their details. Though having *ContactFragment* access the intent that is used 
-to start *ContactActivity* resulted in straightforward code, the fragment is no 
-longer usable with any activity that doesn't provide the appropriate intent. 
-
-### Using Fragment Arguments
-Rather than extracting information from an *Activity*, a *Fragment* can have 
-a *Bundle* attached to it.  Like intent extras, a bundle contains key/value 
-pairs known as arguments.  A bundle can be attached to a fragment using the 
-*Fragment.setArguments()* method but it must be used after the fragment 
-instance is created and before it is added to an activity.  To do this, we'll 
-add a static method to *ContactFragment*:
-
-```java
-public class ContactFragment extends Fragment {
-    ...
-    private static final String ARG_CONTACT_ID = "contact_id";
-
-    public static ContactFragment newInstance(UUID contactID) {
-        ContactFragment contactFragment = new ContactFragment();
-        Bundle args = new Bundle();
-        args.putSerializable(ARG_CONTACT_ID, contactID);
-        contactFragment.setArguments(args);
-        return contactFragment;
-    }
-    ...
-}
-``` 
-
-*ContactActivity* should now call the new static method when creating the 
-fragment:
-
-```java
-public class ContactActivity extends SingleFragmentActivity {
-    private static final String EXTRA_CONTACT_ID =
-            "com.arthurneuman.mycontacts.contact_id";
-    ...
-    @Override
-    protected Fragment createFragment() {
-        UUID contactID = (UUID) getIntent()
-                .getSerializableExtra(EXTRA_CONTACT_ID);
-        return ContactFragment.newInstance(contactID);
-    }
-}
-```
-
-We can also make *ContactActivity.EXTRA_CONTACT_ID* private.
-
-At this point, we've gone from the fragment needing to know something specific 
-about it's activity (the intent extra) to the activity needing to know 
-something specific about the fragment it's creating (that it has a static 
-method that can create an instance with a contact ID); this is an acceptable 
-trade-off as hosting activities can be expected to know the specifics of 
-how to host their fragments.
-
-Finally, we have to use the contact ID to get an instance of *Contact* in 
-*ContactFragment*.  To do this, we can replace the code responsible for 
-accessing the hosting activity's intent in *ContactFragment.onCreate()*:
-
-```java
-public class ContactFragment extends Fragment {
-    ...
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        UUID contactID = (UUID) getArguments().getSerializable(ARG_CONTACT_ID);
-        mContact = AddressBook.get().getContact(contactID);
-    }
-}
-```
-
-If we run the app, it should behave as it did before but now *ContactFragment* 
-isn't so dependent on its hosting activity.
-
-### Updating
-Recall that our code in *contactFragment* included event listeners that updated 
-the model when changes were made.  If we tap a contact from the list, change 
-it, then go back to the list, we don't see the changes.  In order for the 
-changes to appear, we have to modify the *RecyclerView* *Adapter* to expect 
-changes.  
-
-The *ActivityManager* maintains a stack known as the "back stack".  As 
-activities are created, they are added to the back stack so that a user can use 
-the back button to return to a previous activity.  When our app starts, the 
-back stack contains *AddresBookActivity*.  When a row is pressed and an 
-instance of *ContactActivity* is created, that new instances is added to the 
-back stack.  When the back button is pressed, the top activity is removed and 
-the next activity is displayed.  
-
-When an activity is no longer at the top of the back stack, it is paused and 
-usually stopped.  When it returns to the top, it is started, if necessary, and 
-resumed.  When *AddresBookActivity* is resumed, the OS calls *onResume()* on 
-any fragments hosted by the activity.  We can use 
-*AddressBookFragment.onResume()* to update the list by calling 
-*AddresBookFragment.updateUI()*.  We have to be careful to not create a new 
-*ContactAdapter* if it already exists; we can call 
-*ContactAdapter.notifyDataSetChanged()* instead.
-
-```java
-public class AddressBookFragment extends Fragment {
-    ...
-    @Override
-    public void onResume() {
-        super.onResume();
-        updateUI();
-    }
-
-    private void updateUI() {
-        AddressBook addressBook = AddressBook.get();
-        List<Contact> contacts = addressBook.getContacts();
-        if (mContactAdapter == null) {
-            mContactAdapter = new ContactAdapter(contacts);
-            mAddressBookRecyclerView.setAdapter(mContactAdapter);
-        }
-        else {
-            mContactAdapter.notifyDataSetChanged();
-        }
-    }
-    ...
-}
-``` 
-
-## ViewPagers
-We now have the ability to view a list of contacts and view the details of each 
-one individually.  While that is useful, it isn't a quick task to move from 
-one contact to the next: we have to tap the back button then tap the next 
-contact, repeating this process everytime we want to see another contact.  A 
-lot of apps allow users to swipe left and right between similar items; we can 
-do the same for our contact details.  In order to support this, we'll create a 
-new activity to host *ContactFragment* with a *ViewPager* layout; *ViewPager* 
-is responsible for supporting the swiping behavior.   We'll see that 
-*ViewPager* is similar to *RecyclerView* in some ways; one key difference is 
-that while *RecyclerView* can display several things on screen, *ViewPager* 
-is used to display only one item on screen at a time.
-
-To begin, let's create a new layout resource file, `activity_contact_pager.xml` 
-with root element `android.support.v4.view.ViewPager`.  Be sure to set its ID. 
-The XML for the new resource should look similar to the following:
-
-```XML
+```xml
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v4.view.ViewPager
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:id="@+id/activity_contact_pager_view_pager">
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:android="http://schemas.android.com/apk/res/android">
 
-</android.support.v4.view.ViewPager>
+    <item android:title="@string/new_contact"
+          android:id="@+id/menu_item_create_contact"
+        />
+    <item android:title="@string/show_favorites"
+          android:id="@+id/menu_item_toggle_favorites"
+        />
+</menu>
 ```
 
-Next, let's create a new activity, *ContactPagerActivity* that will derive 
-from *FragmentActivity* and override its *onCreateView()* method to set the 
-view using the layout we created:
+The menu is currently configured such that its menu items appear in the 
+overflow menu, accessed by pressing the three dots on the right side of the 
+toolbar.  Let's keep the toggle item in the overflow menu but move the 
+new contact item out of the overflow menu and use an icon only as well as text, 
+provided there's enough room on the screen.
 
-```java
-public class ContactPagerActivity extends FragmentActivity {
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_contact_pager);
-    }
-}
+With the new contact menu item selected, click the button next to the **icon** 
+field.  Search for and select `ic_menu_add`.  Change the value of 
+**showAsAction** to include `ifRoom` and `withText``.  
+
+The XML for the menu resource file should now look like this:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:title="@string/new_contact"
+          android:id="@+id/menu_item_create_contact"
+          android:icon="@android:drawable/ic_menu_add"
+          app:showAsAction="ifRoom|withText"/>
+    <item android:title="@string/show_favorites"
+          android:id="@+id/menu_item_toggle_favorites"
+        />
+</menu>
 ```
 
-Like a *RecyclerView* that requires an *Adapter* to provide views, a 
-*ViewPager* also requires a special *Adapter* to provide views: a 
-*PagerAdapter*.  While there are a lot more details to the interactions between 
-a *ViewPager* and a *PagerAdapter* than between a *RecyclerView* and its 
-*Adapter*, we can use a subclass of *PagerAdapter*, *FragmentStatePagerAdapter* 
-to handle most of the details.  In order to use a *FragmentStatePagerAdapter*, 
-we'll need to implement two methods: *getCount()* and *getItem()*. The 
-*getCount()* method will return the total number of items.  The *getItem()* 
-method takes an integer parameter and should return a *Fragment* configured to 
-display the item at the corresponding integer position.  
+Note that we have to use the *app:showAsAction* attribute rather than 
+the default *android:showAsAction* attribute due to legacy support issues 
+with the AppCompat library. 
 
-In the *ContactPagerActivity.onCreate()* method, we can get the *ViewPager* 
-in the new layout using its ID, then use the *ViewPager.setAdapter()* method 
-to assign a new *FragmentStatePagerAdapter* to it.  When we create a new 
-instance of *FragmentStatePagerAdapter*, we'll need to provide it the 
-fragment manager as a parameter.  Additionally, we'll need to use *AddressBook* 
-to get a list of contacts.
+The design view should look like this:
 
-Here's the code necessary to create an instance of *FragmentStatePagerAdapter*, 
-override its *getItem()* and *getCount()* methods, and assign it to the 
-*ViewPager*:
+![menu](images/menu-design.png) 
 
-```java
-public class ContactPagerActivity extends FragmentActivity {
-    private ViewPager mViewPager;
-    private List<Contact> mContacts;
+Now that we've designed the menu, let's add it to our app.  In Android, menus 
+are managed by callbacks from the *Activity* class.  When a menu is needed, 
+*Activity.onCreateOptionsMenu()* is called.  Our app, however, relies on 
+code to be implemented in fragments.  Fortunately, framgments also have 
+a *onCreateOptionsMenu()* that we can override.  The *FragmentManager* is 
+responsible for call the appropriate fragment's method when the hosting 
+activity's *onCreateOptionsMenu()* method is called.  To notify the 
+*FragmentManager* that this fragment can receive callbacks, we have to add 
+a call to `setHasOptionsMenu(true)` in the *AddressBookFragment.onCreate()* 
+method.  
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_contact_pager);
-
-        mContacts = AddressBook.get().getContacts();
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        mViewPager = (ViewPager) findViewById(
-                R.id.activity_contact_pager_view_pager);
-
-        mViewPager.setAdapter(new FragmentStatePagerAdapter(fragmentManager) {
-            @Override
-            public Fragment getItem(int position) {
-                Contact contact = mContacts.get(position);
-                return ContactFragment.newInstance(contact.getID());
-            }
-
-            @Override
-            public int getCount() {
-                return mContacts.size();
-            }
-        });
-    }
-}
-```
-
-Now that we've coded *ContactPagerActivity*, we'll need to replace usages 
-of *ContactActivity* in other places in our code.  Recall that we added a 
-*newIntent()* method to *ContactActivity* to allow *AddresBookActivity* to 
-start it; we'll have to do something similar to *ContactPagerActivity*.  An 
-intent extra will be used to indicate which initial contact should be 
-displayed.  We can use the ID with the *ViewPager.setCurrentItem()* method 
-to display the correct contact's details:
-
-```java
-public class ContactPagerActivity extends FragmentActivity {
-    private static final String EXTRA_CONTACT_ID =
-            "com.arthurneuman.mycontacts.contact_id";
-
-    private ViewPager mViewPager;
-    private List<Contact> mContacts;
-
-    public static Intent newIntent(Context packageContext, UUID contactID) {
-        Intent intent = new Intent(packageContext, ContactPagerActivity.class);
-        intent.putExtra(EXTRA_CONTACT_ID, contactID);
-        return intent;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        ...
-        UUID contactID = (UUID) getIntent()
-                .getSerializableExtra(EXTRA_CONTACT_ID);
-        for (int index = 0; index < mContacts.size(); index++) {
-            if (mContacts.get(index).getID().equals(contactID)) {
-                mViewPager.setCurrentItem(index);
-                break;
-            }
-        }
-    }
-}
-```
-
-We also need to update *AddresBookFragment*'s *ContactHolder.onClick()* method 
-to use the new intent:
+To add the menu to the address book, add the following code to the 
+*AddressBookFragment* class:
 
 ```java
 public class AddressBookFragment extends Fragment {
     ...
-    private class ContactHolder extends RecyclerView.ViewHolder
-            implements View.OnClickListener{
-        ...
-        @Override
-        public void onClick(View v) {
-            Intent intent = ContactPagerActivity.newIntent(getActivity(),
-                    mContact.getID());
-            startActivity(intent);
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.fragment_address_book, menu);
+    }
+    ...
+}
+```
+
+Here, we call *MenuInflater.inflate()* specifying the id of our menu resource 
+and the *Menu* instance that will be populated with our menu items.  We can 
+now run the app and we should be able to see the menu items.
+
+![more-menu](images/menu-running.png) 
+
+Now that we have the menu appearing in the app, we need to add code that will 
+perform some action when a user selects one of the menu items.  To do this,
+we have to override the *onOptionsItemSelected()* method in 
+*AddressBookFragment*.  When the method is called, a *MenuItem* is passed as a 
+parameter.  We can use *MenuItem.getItemId()* to get the ID of the item and 
+determine the appropriate action.  
+
+Before we handle the menu items, let's add a method to *AddressBook*:
+
+```java
+public class AddressBook {
+    ...
+    public List<Contact> getFavoriteContacts() {
+        List<Contact> favorites = new ArrayList<>();
+        for (Contact c: mContacts) {
+            if (c.isFavorite()) {
+                favorites.add(c);
+            }
+        }
+        return favorites;
+    }
+    ...
+}
+```
+
+This method will return a list of contacts marked as favorites.  Next, we can
+add the code necessary to toggle between showing all contacts and those that 
+are favorites:
+
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+    private boolean mShowFavoritesOnly = false;
+    ...
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_item_create_contact:
+                // we'll add this later
+                return true;
+            case R.id.menu_item_toggle_favorites:
+                mShowFavoritesOnly = !mShowFavoritesOnly;
+                if (mShowFavoritesOnly) {
+                    item.setTitle(R.string.show_all);
+                    mContactAdapter.mContacts =
+                            AddressBook.get().getFavoriteContacts();
+                }
+                else {
+                    item.setTitle(R.string.show_favorites);
+                    mContactAdapter.mContacts =
+                            AddressBook.get().getContacts();
+                }
+                mContactAdapter.notifyDataSetChanged();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
     }
     ...
 }
 ```
 
-Finally, we need to update the app's manifest, 
-`app/manifests/AndroidManifest.xml` to include the new activity; we can replace 
-*ContactActivity* with *ContactPagerActivity*:
+First, we'll keep track of whether or not we're displaying only favorite 
+contacts or all contacts using a private field, *mShowFavoritesOnly*.  In the 
+*onOptionsItemSelected()* method, we'll determine what to do based on the 
+menu item's ID.  We'll add code to add a new contact shortly.  For now, we 
+can toggle between favorites and all contacts by first changing the value of 
+*mShowFavoritesOnly* then setting the menu item's title and the adapter's 
+list of contacts based on the value of *mShowFavoritesOnly*.  After we 
+change the adapter's list of contacts, we have to call 
+*Adapter.notifyDataSetChanged()*.  Finally, we return *true* to indicate no 
+further processing of the item is necessary.
+
+To support adding new contacts, let's first reduce the number of contacts 
+that are automatically generated - we'll keep some so they exist when we start 
+the app.  Recall that we create these initial contacts in the *AddressBook* 
+constructor.  While we're modifying *AddressBook*, let's also add a method to 
+add a contact to the list of contacts.  Here's what *AddressBook* should look 
+like:
+
+```java
+public class AddressBook {
+    ...
+    private AddressBook() {
+        mContacts = new ArrayList<>();
+        for (int i=0; i<5; i++) {
+            Contact contact = new Contact();
+            contact.setName("Person " + i);
+            contact.setEmail("Person" + i + "@email.com");
+
+            // set every 2nd as a favorite
+            if (i % 2 == 0) {
+                contact.setFavorite(true);
+            }
+
+            mContacts.add(contact);
+        }
+    }
+    ...
+    public void add(Contact contact) {
+        mContacts.add(contact);
+    }
+    ...
+}
+```
+
+Next, we can add code to handle the new contact menu item to 
+*AddressBookFragment*:
+
+```java
+public class AddressBookFragment extends Fragment {
+    ...
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_item_create_contact:
+                Contact contact = new Contact();
+                AddressBook.get().add(contact);
+                Intent intent = ContactPagerActivity.newIntent(
+                        getActivity(),contact.getID());
+                startActivity(intent);
+                return true;
+            case R.id.menu_item_toggle_favorites:
+                mShowFavoritesOnly = !mShowFavoritesOnly;
+                if (mShowFavoritesOnly) {
+                    item.setTitle(R.string.show_all);
+                    mContactAdapter.mContacts =
+                            AddressBook.get().getFavoriteContacts();
+                }
+                else {
+                    item.setTitle(R.string.show_favorites);
+                    mContactAdapter.mContacts =
+                            AddressBook.get().getContacts();
+                }
+                mContactAdapter.notifyDataSetChanged();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+    ...
+}
+```
+
+This new code creates a *Contact*, adds it to the *AddressBook*, and then 
+uses *ContactPagerActivity* to create an intent and display the contact's 
+details which we can edit.  We can now run the app, add contacts, and filter 
+the list to display only our favorites.
+
+## Hierarchical Navigation
+So far, we've been able to use the back button to return to a previous screen 
+while using our app.  This type of navigation is called 
+**temporal navigation** - using the back button takes us back to the last place 
+we were.  An alternative to temporal navigation is **hierarchical navigation**. 
+Hierarchical navigation allows users to move up the app hierarchy - returning 
+to the parent activity at any time.  Hierarchical navigation is made available 
+to users through a up button that appears as a left-pointing arrow in the 
+toolbar.  In order to enable this functionality, we have to specify an 
+activity's parent in the app's manifest.  The following will allow users to 
+return to the AddressBookActivity from the ContactPagerActivity:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -417,7 +330,8 @@ Finally, we need to update the app's manifest,
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".ContactPagerActivity">
+        <activity android:name=".ContactPagerActivity"
+            android:parentActivityName=".AddressBookActivity">
         </activity>
         <activity android:name=".AddressBookActivity">
             <intent-filter>
@@ -428,12 +342,9 @@ Finally, we need to update the app's manifest,
     </application>
 
 </manifest>
-```
+``` 
 
-You should now be able to run the app, choose a contact, and swipe between 
-them.  If the app crashes when pressing a contact, check the `build.gradle` 
-file and make sure that the version of the `com.android.support:support-v4` 
-dependency matches the value of `compileSdkVersion`.  If you have to change 
-the version, be sure to sync gradle and choose **Build -> Clean Project** from 
-the menus.  
-
+While this performs the same action as pushing the back button in our app, 
+in more complicated apps, this could be more useful.  In more complicated 
+apps, hierarchical navigation would allow to return to a screen that would 
+normally require multiple presses of the back button.
