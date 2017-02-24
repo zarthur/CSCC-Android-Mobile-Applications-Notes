@@ -401,8 +401,8 @@ use when the *onBindViewHolder()* and *getItemCount()* methods are called. In
 `android.R.layout.simple_list_item_1` as the layout to be inflated; this comes 
 from the Android standard library.
 
-Next, we have to connect *ContactActivity* and the *RecyclerView*.  To do 
-this, we'll add a method to *AddressBookFragment* that creates an instance 
+Next, we have to connect *ContactAdapter* and the *RecyclerView*.  To do 
+this, we'll add a method to *AddressBookFragment* that gets an instance 
 of *AddressBook*, uses it to create an instance of *ContactAdapter*, and 
 calls the *RecyclerView*'s *setAdapter()* method.  We'll call this new method 
 before returning **view** in *onCreateView()*.

@@ -106,7 +106,7 @@ test passes or fails.  We can define tests for the getters and setters of
 the *Contact* class.  If the getters and setters of the *Contact* class depend 
 on any component of the Android framework, such as *Log*, the following 
 examples will not work; comment out any Android-dependent functionality, create 
-different tests, or see the details of instrumented tests below.
+different tests, or see the details of mocked tests below.
 
 The following are two tests for the accessor methods in the *Contact* class: 
 
@@ -369,11 +369,11 @@ cleared; this can be done by adding the following to the
 ```
 
 ## Adding Widgets and Updating Layouts
-Let's start by adding some additional functionality to our app.  Eventually, 
-we'll be able to view a list of contacts and it might be helpful to select 
-some contacts as "favorites" and view only favorite contacts.  To enable the 
-user to designate a contact as a favorite, we'll add a widget to the contact 
-fragment layout, update the *Contact* class, and wire the new widget to 
+Let's return to the contacts app and add some additional functionality. 
+Eventually, we'll be able to view a list of contacts and it might be helpful to 
+select some contacts as "favorites" and view only favorite contacts.  To enable 
+the user to designate a contact as a favorite, we'll add a widget to the 
+contact fragment layout, update the *Contact* class, and wire the new widget to 
 make changes to the corresponding *Contact* instance when the widget's state 
 changes.  
 
