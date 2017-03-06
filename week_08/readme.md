@@ -48,7 +48,7 @@ The file should contain something like this:
 ## Menus
 The right area of the toolbar is reserved for the menu.  A menu consists of 
 action items that can perform an action on the current screen or on the 
-app as a while.  We'll create actions to create a contact and to display 
+app as a whole.  We'll create actions to create a contact and to display 
 favorites or all contacts.  We'll need some string resources for use with the 
 menu; add these to `res/values/strings.xml`:
 
@@ -88,7 +88,7 @@ like this:
 The menu is currently configured such that its menu items appear in the 
 overflow menu, accessed by pressing the three dots on the right side of the 
 toolbar.  Let's keep the toggle item in the overflow menu but move the 
-new contact item out of the overflow menu and use an icon only as well as text, 
+new contact item out of the overflow menu and use an icon as well as text, 
 provided there's enough room on the screen.
 
 With the new contact menu item selected, click the button next to the **icon** 
@@ -314,7 +314,7 @@ while using our app.  This type of navigation is called
 we were.  An alternative to temporal navigation is **hierarchical navigation**. 
 Hierarchical navigation allows users to move up the app hierarchy - returning 
 to the parent activity at any time.  Hierarchical navigation is made available 
-to users through a up button that appears as a left-pointing arrow in the 
+to users through an up button that appears as a left-pointing arrow in the 
 toolbar.  In order to enable this functionality, we have to specify an 
 activity's parent in the app's manifest.  The following will allow users to 
 return to the AddressBookActivity from the ContactPagerActivity:
