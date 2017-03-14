@@ -64,8 +64,8 @@ milestone appears below.  See the syllabus for the due dates of each milestone.
     - A Fragment with widgets to store task name and description
     - Code to save task name and description as they are entered
     - Log messages indicating updated task name and description
-- **Milestone 2 - week 5 through week 7**
-    - Unit tests of model and controller functionality
+- **Milestone 2 - week 5 through week 8**
+    - Unit tests of model and controller functionality 
     - Task fragment includes fields for name, description, status 
       (complete/incomplete), due date, category, and address
     - Class representing a collection of tasks and a class representing a 
@@ -73,28 +73,19 @@ milestone appears below.  See the syllabus for the due dates of each milestone.
     - Activity hosting a fragment with a RecyclerView to display the list 
       of tasks and an Adapter to provide data to the view
     - Tapping a task loads the activity with task's details
-    - Display number of completed and incomplete tasks
-- **Milestone 3 - week 8 through week 11**
-    - Use of a ViewPager to enable swiping between task details
+    - Toolbars supporting hierarchical navigation.
     - Menu items to support creating a new task, viewing categories, and hiding 
       completed tasks
+- **Milestone 3 - week 9 through week 14**
     - Menu item to delete a task
+    - Display number of completed and incomplete tasks
+    - Use of a ViewPager to enable swiping between task details
     - RecyclerView to display catagories and a ViewPager to display category 
       details; ability to modify category name.
-    - Toolbars supporting hierarchical navigation.
     - Task details include a map indicating task location
-    - Ability to share task details via another app (text message, email, etc.)
-- **Milestone 4 - week 12 through week 15**
     - Store task and category data to a database in order to persist data
-    - Provide a settings interface to allow the user to store the URL and 
-      credentials of a remote server that can be used to sync task data
-    - Implement code necessary to sync task data with a remote server using 
-      JSON and a RESTful API
-    - Either automatically sync task data with a remote server periodically or 
-      provide the user with the means of manually starting the sync process
     - Provide a two-pane layout for use with tablet devices
-    - Generate a signed APK that can be used for app distribution
-
+  
 ## Example
 A mocked-up example of a to-do app can be found 
 [here](https://github.com/zarthur/CSCC-Android-Mobile-Applications-Notes/raw/master/project/files/todo-prototype.zip). 
