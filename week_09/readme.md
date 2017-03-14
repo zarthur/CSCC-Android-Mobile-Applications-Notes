@@ -19,6 +19,7 @@ ourselves or we could use the
 [Android Asset Studio](https://romannurik.github.io/AndroidAssetStudio).  
 
 Below is an example of two star images.
+
 ![stars](images/stars.png) 
 
 When using Android Asset Studio, notice that the zip file includes several 
