@@ -44,6 +44,136 @@ superclass, overriding the constructor as necessary.  Finally, we'll override
 other methods in order to provide the functionality our custom view needs.
 
 ### Custom View Class
+Let's create a new class, *FavoriteView*, to represent our new widget.  This 
+class will be a subclass of *android.view.View*.  The *View* class doesn't 
+provide a default constructor, so we'll need to add a constructor.  Typically, 
+we'll add two constructors: one used when creating the view in code and one 
+used when inflating the view from XML.  
+
+```java
+public class FavoriteView extends View {
+    public FavoriteView(Context context) {
+        super(context);
+    }
+
+    public FavoriteView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+    }
+}
+```
+
+We're now able to use the view in our app (thought it won't appear as anything 
+yet).  Update the *fragment_contact.xml* layout file by replacing the 
+*CheckBox* widget with the new *FavoriteView*; note that we have to use the 
+fully qualified class name.  
+
+```xml
+<LinearLayout ...>
+    ...
+    <com.arthurneuman.mycontacts.FavoriteView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/contact_favorite"/>
+    ...
+</LinearLayout>
+```
+
+As a start, we'd like our new widget to display an outlined start.  To enable 
+this functionality, we'll need to override *View.onDraw(Canvas canvas)*. A
+*Canvas* instance allows us to draw on it.  
+
+There are multiple ways to add a drawable resource to a canvas, we'll make use 
+of a method that first loads the resource as a *Bitmap* then draws the bitmap 
+on the canvas.  To draw the bitmap, we'll also need an instance of the *Paint* 
+class.  Instances of *Canvas* provide us a place to draw and instances of 
+*Paint* determine how the drawing is done.  Rather than create instances of 
+*Paint* and *Bitmap* in the *onDraw()* method, we can create a method that the 
+constructors use.
+
+```java
+public class FavoriteView extends View {
+    private Paint mPaint;
+    private Bitmap mStarEmpty;
+    private Bitmap mStarFull;
+
+    public FavoriteView(Context context) {
+        super(context);
+        preallocate();
+
+    }
+
+    public FavoriteView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        preallocate();
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        canvas.drawBitmap(mStarEmpty, 0, 0, mPaint);
+    }
+
+    private void preallocate() {
+        mPaint = new Paint();
+
+        mStarEmpty = BitmapFactory.decodeResource(getResources(), R.drawable.ic_star_empty);
+        mStarFull = BitmapFactory.decodeResource(getResources(), R.drawable.ic_star_full);
+    }
+}
+```
+
+We've added three new fields to the *FavoriteView* class: one for an instance 
+of *Paint* and two *Bitmap* instances for our empty and filled stars.  We 
+assign values to these fields in the *preallocate()* method and draw to the 
+canvas in the *onDraw()* method.
+
+We could add an additional private, boolean field, *isSelected* to support 
+toggling between a selected and unselected state.  We would also add a getter 
+and setter will that would us to use the widget in much the same way we used 
+the *CheckBox* widget. The *onDraw()* method would check the value of the 
+field to determine which image to show.  Fortunately, *View* already implememts 
+the *isSelected()* and *setSelected()* methods, so we only need to update the 
+*onDraw()* method.
+
+```java
+public class FavoriteView extends View {
+    ...
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        Bitmap image = isSelected() ? mStarFull : mStarEmpty;
+        canvas.drawBitmap(image, 0, 0, mPaint);
+    }
+
+
+    ...    
+}
+```
+
+We can now update *ContactFragment* to set the state of the new widget based 
+on whether or not a contact is a favorite. 
+
+```java
+public class ContactFragment extends Fragment {
+    ...
+    private FavoriteView mFavoriteView;
+    ...
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        ...
+
+        mFavoriteView = (FavoriteView) v.findViewById(R.id.contact_favorite);
+        mFavoriteView.setSelected(mContact.isFavorite());
+
+        ...
+    }
+
+    ...
+}
+```
 
 ### Handling Touch Events
 
