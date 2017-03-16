@@ -175,5 +175,160 @@ public class ContactFragment extends Fragment {
 }
 ```
 
-### Handling Touch Events
+### Widget Size
+If we were to run the app now, it might look reasonable.  However, there is an 
+issue with the sizing of our new widget.  Let's move it above the name field. 
+Notice that everything below the *FavoriteView* widget has seemingly 
+disappeared. The reason for this is that *FavoriteView* is incorrectly 
+reporting its height and width information.  By default, the *View* class 
+reports the background dimensions for height and width - this is much more than 
+we need for *Favorite* view.  To fix this, we'll need to override the 
+*onMeasure()* method and ultimately call *setMeasuredDimension()*, specifying 
+the width and the height of our widget.
 
+The *onMeasure()* method takes two parameters, ints for the width and height 
+*MeasureSpec*.  *MeasureSpec* provides information about the available layout 
+space determined by layout parameters.  There are three *MeasureSpec* modes 
+that are available from the *MeasureSpec* parameters in addition to 
+actual size details: 
+
+- *MeasureSpec.EXACTLY*: the widget height or width must be specified size and 
+nothing else
+- *MeasureSpec.AT_MOST*: the widget height or width can be no larger than the 
+specified value
+- No *MeasureSpec* mode specified: we can set the height or width to whatever we 
+want
+
+If the *MeasureSpec* mode were *EXACTLY* or *AT_MOST*, we might resize widget's 
+content to fit. Because we fully control where this widget will be used, we'll 
+keep *FavoriteView.onMeasure()* simple:
+
+```java
+public class FavoriteView extends View {
+   ...
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        setMeasuredDimension(mStarEmpty.getWidth(), mStarEmpty.getHeight());
+    }
+    
+    ...
+```
+
+
+### Additional functionality 
+When we used *CheckBox*, not only were we able to click the widget to toggle 
+between checked and unchecked states, but we were also able to attach a 
+listener to update the contact's favorite status.  Let's work on toggling the 
+widget's appearance first.
+
+We'll need to attach an *OnClickListener* to our widget that switches between 
+being selected on being unselected.  The listener will also need to tell the 
+widget to update the canvas.  We can update the canvas by calling 
+*FavoriteView.invalidate()*, a method inherited from *View* that tells the view 
+to redraw the canvas (which will cause *onDraw()* to be called again).  We 
+can set this new listener in the *preallocate()* method since it is called by 
+both constructors.
+
+```java
+public class FavoriteView extends View{
+    ...
+
+    private void preallocate() {
+        ...
+
+        setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setSelected(!isSelected());
+                invalidate();
+            }
+        });
+    }
+}
+```
+
+Next, we'd like to be able to attach another listener that can be used outside 
+the *FavoriteView* class. Specifically, we need to be able to attach a listener 
+from the *ContactFragment* class that can update a contact's favorite status 
+when *FavoriteView*'s selection changes.  To do this, we'll create a new 
+interface defined within *FavoriteView* named 
+*FavoriteView.OnSelectedChangedListener*.  This new interface will declare one 
+method: *onSelectedChanged(boolean selected)*.
+
+```java
+
+public class FavoriteView extends View{
+    ... 
+
+    public static interface OnSelectedChangedListener {
+        void onSelectedChanged(boolean selected);
+    }
+
+}
+```
+
+What we can now do is allow an *OnSelectedChangedListener* to be assigned 
+to *FavoriteView*; we'll create a private field and a setter.  We can 
+then update the *OnClickListner*, created in *preallocate()* to call the 
+assigned *OnSelectedChangedListerner*'s *onSelectedChanged()* method.
+
+```java
+public class FavoriteView extends View{
+    ...
+    private OnSelectedChangedListener mOnSelectedChangedListener;
+
+    ..
+
+    private void preallocate() {
+        ...
+
+        setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setSelected(!isSelected());
+                invalidate();
+                if(mOnSelectedChangedListener != null) {
+                    mOnSelectedChangedListener.onSelectedChanged(isSelected());
+                }
+            }
+        });
+    }
+
+    public void setOnSelectedChangedListener(OnSelectedChangedListener onSelectedChangedListener) {
+        mOnSelectedChangedListener = onSelectedChangedListener;
+    }
+
+    public static interface OnSelectedChangedListener {
+        void onSelectedChanged(boolean selected);
+    }
+
+}
+```
+
+Finally, we can update *ContactFragment* to set a listener.
+
+```java
+public class ContactFragment extends Fragment {
+    ...
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        ...
+
+        mFavoriteView = (FavoriteView) v.findViewById(R.id.contact_favorite);
+        mFavoriteView.setSelected(mContact.isFavorite());
+        mFavoriteView.setOnSelectedChangedListener(new FavoriteView.OnSelectedChangedListener() {
+            @Override
+            public void onSelectedChanged(boolean selected) {
+                mContact.setFavorite(selected);
+            }
+        });
+        
+        ...
+    }
+
+    ...
+}
+```
