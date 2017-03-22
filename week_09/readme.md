@@ -98,13 +98,13 @@ public class FavoriteView extends View {
 
     public FavoriteView(Context context) {
         super(context);
-        preallocate();
+        initialize();
 
     }
 
     public FavoriteView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        preallocate();
+        initialize();
     }
 
     @Override
@@ -113,7 +113,7 @@ public class FavoriteView extends View {
         canvas.drawBitmap(mStarEmpty, 0, 0, mPaint);
     }
 
-    private void preallocate() {
+    private void initialize() {
         mPaint = new Paint();
 
         mStarEmpty = BitmapFactory.decodeResource(getResources(), R.drawable.ic_star_empty);
@@ -124,7 +124,7 @@ public class FavoriteView extends View {
 
 We've added three new fields to the *FavoriteView* class: one for an instance 
 of *Paint* and two *Bitmap* instances for our empty and filled stars.  We 
-assign values to these fields in the *preallocate()* method and draw to the 
+assign values to these fields in the *initialize()* method and draw to the 
 canvas in the *onDraw()* method.
 
 We could add an additional private, boolean field, *isSelected* to support 
@@ -186,22 +186,21 @@ we need for *Favorite* view.  To fix this, we'll need to override the
 *onMeasure()* method and ultimately call *setMeasuredDimension()*, specifying 
 the width and the height of our widget.
 
-The *onMeasure()* method takes two parameters, ints for the width and height 
-*MeasureSpec*.  *MeasureSpec* provides information about the available layout 
-space determined by layout parameters.  There are three *MeasureSpec* modes 
-that are available from the *MeasureSpec* parameters in addition to 
-actual size details: 
+The *onMeasure()* method takes two parameters, *int*s representing 
+specifications for for the width and height.  In addition to storing size 
+information, these integers also store information about the layout.  To 
+extract both the layout and size information, we can use *MeasureSpec*. There 
+are three *MeasureSpec* modes: 
 
 - *MeasureSpec.EXACTLY*: the widget height or width must be specified size and 
 nothing else
 - *MeasureSpec.AT_MOST*: the widget height or width can be no larger than the 
 specified value
-- No *MeasureSpec* mode specified: we can set the height or width to whatever we 
-want
+- *MeasureSpec.UNSPECIFIED*: no layout preference was specified so we can set 
+the height or width to whatever we want
 
-If the *MeasureSpec* mode were *EXACTLY* or *AT_MOST*, we might resize widget's 
-content to fit. Because we fully control where this widget will be used, we'll 
-keep *FavoriteView.onMeasure()* simple:
+Below is an implementation of *onMeasure()* that will report size information 
+for the widget based on the *MeasureSpec* mode.
 
 ```java
 public class FavoriteView extends View {
@@ -209,12 +208,46 @@ public class FavoriteView extends View {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        setMeasuredDimension(mStarEmpty.getWidth(), mStarEmpty.getHeight());
+        int desiredWidth = mStarEmpty.getWidth();
+        int desiredHeight = mStarEmpty.getHeight();
+
+        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+        
+        int width;
+        int height;
+        
+        switch (widthMode) {
+            case MeasureSpec.EXACTLY:
+                width = widthSize;
+                break;
+            case MeasureSpec.AT_MOST:
+                width = Math.min(desiredWidth, widthSize);
+                break;
+            case MeasureSpec.UNSPECIFIED:
+            default:
+                width = desiredWidth;
+        }
+
+        switch (heightMode) {
+            case MeasureSpec.EXACTLY:
+                height = heightSize;
+                break;
+            case MeasureSpec.AT_MOST:
+                height = Math.min(desiredHeight, heightSize);
+                break;
+            case MeasureSpec.UNSPECIFIED:
+            default:
+                height = desiredHeight;
+        }
+        
+        setMeasuredDimension(width, height);
     }
     
     ...
 ```
-
 
 ### Additional functionality 
 When we used *CheckBox*, not only were we able to click the widget to toggle 
@@ -227,14 +260,14 @@ being selected on being unselected.  The listener will also need to tell the
 widget to update the canvas.  We can update the canvas by calling 
 *FavoriteView.invalidate()*, a method inherited from *View* that tells the view 
 to redraw the canvas (which will cause *onDraw()* to be called again).  We 
-can set this new listener in the *preallocate()* method since it is called by 
+can set this new listener in the *initialize()* method since it is called by 
 both constructors.
 
 ```java
 public class FavoriteView extends View{
     ...
 
-    private void preallocate() {
+    private void initialize() {
         ...
 
         setOnClickListener(new OnClickListener() {
@@ -270,7 +303,7 @@ public class FavoriteView extends View{
 
 What we can now do is allow an *OnSelectedChangedListener* to be assigned 
 to *FavoriteView*; we'll create a private field and a setter.  We can 
-then update the *OnClickListner*, created in *preallocate()* to call the 
+then update the *OnClickListner*, created in *initialize()* to call the 
 assigned *OnSelectedChangedListerner*'s *onSelectedChanged()* method.
 
 ```java
@@ -280,7 +313,7 @@ public class FavoriteView extends View{
 
     ..
 
-    private void preallocate() {
+    private void initialize() {
         ...
 
         setOnClickListener(new OnClickListener() {
