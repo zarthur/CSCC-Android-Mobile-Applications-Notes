@@ -2,6 +2,11 @@
 Notes for the Android Mobile Applications course at Columbus State Community
 College.
 
+## Book
+These notes are based on the book used in the course: 
+*Android Programming: The Big Nerd Ranch Guide* 
+by Bill Phillips, Chris Stewart, and Kristin Marsicano
+
 ## Lecture Notes
 Weekly lecture notes can be found in the various subdirectories or by
 following the links below.
