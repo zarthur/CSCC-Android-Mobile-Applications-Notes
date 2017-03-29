@@ -210,16 +210,23 @@ public class ContactFragment extends Fragment {
 
 ## Using Maps 
 As a next step, let's add a *MapView* to our `fragment_contact.xml` layout; 
-drag and drop a *MapView* from the design palette to an area below the favorite 
-checkbox. Set the *MapView*'s **id** to `contact_map`.  The layout's XML should 
+drag and drop a *MapView* from the design palette to an area below the address 
+*EditText*. Set the *MapView*'s **id** to `contact_map`.  The layout's XML should 
 look similar to the following:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
+    <com.arthurneuman.mycontacts.FavoriteView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/contact_favorite"/>
+
     <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -243,12 +250,6 @@ look similar to the following:
         android:id="@+id/contact_address"
         android:padding="20dp"
         android:hint="@string/address_hint"/>
-
-    <CheckBox
-        android:text="@string/favorite"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/contact_favorite"/>
 
     <com.google.android.gms.maps.MapView
         android:layout_width="match_parent"
@@ -429,7 +430,7 @@ public class ContactFragment extends Fragment {
     private Contact mContact;
     private EditText mNameField;
     private EditText mEmailField;
-    private CheckBox mFavoriteCheckBox;
+    private FavoriteView mFavoriteView;
     private EditText mAddressField;
     private MapView mMapView;
 
@@ -497,12 +498,12 @@ public class ContactFragment extends Fragment {
             }
         });
 
-        mFavoriteCheckBox = (CheckBox)v.findViewById(R.id.contact_favorite);
-        mFavoriteCheckBox.setChecked(mContact.isFavorite());
-        mFavoriteCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        mFavoriteView = (FavoriteView) v.findViewById(R.id.contact_favorite);
+        mFavoriteView.setSelected(mContact.isFavorite());
+        mFavoriteView.setOnSelectedChangedListener(new FavoriteView.OnSelectedChangedListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mContact.setFavorite(isChecked);
+            public void onSelectedChanged(boolean selected) {
+                mContact.setFavorite(selected);
             }
         });
 
