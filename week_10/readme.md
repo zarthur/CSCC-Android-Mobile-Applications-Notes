@@ -261,7 +261,7 @@ look similar to the following:
 
 Next, we can begin to work with our map by modifying the *ContactFragment* 
 class. Before we add any code, it's important that we understand how maps work.
-We can access the *MapView* widget in the same we we access the other widgets 
+We can access the *MapView* widget in the same way we access the other widgets 
 using *View.findViewById()*.  Once we have access to the widget, we have to 
 forward all lifecycle calls from our fragment to the widget; this includes 
 calls to the following:
@@ -288,7 +288,9 @@ In order to display the address, we will need to convert it to a latitude and a
 longitude.  To do this, we will rely on a *Geocoder*.  The *Geocoder* is able 
 to find latitude and longitude from a given address and return a list of 
 results.  We can use the first result to create a map marker and reposition the 
-map to the latitude and longitude.  
+map to the latitude and longitude.  We use the *clear()* method to remove any 
+existing markers - this will be useful when we update the map when the 
+address changes.
 
 With these changes, *ContactFragment* should include the following:
 
@@ -306,6 +308,7 @@ public class ContactFragment extends Fragment implements OnMapReadyCallback {
         mMapView.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(GoogleMap googleMap) {
+                googleMap.clear();
                 Geocoder geo = new Geocoder(getContext());
                 try {
                     List<Address> addresses =
@@ -392,6 +395,7 @@ public class ContactFragment extends Fragment {
         mMapView.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(GoogleMap googleMap) {
+                googleMap.clear();
                 Geocoder geo = new Geocoder(getContext());
                 try {
                     List<Address> addresses =
@@ -543,6 +547,7 @@ public class ContactFragment extends Fragment {
         mMapView.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(GoogleMap googleMap) {
+                googleMap.clear();
                 Geocoder geo = new Geocoder(getContext());
                 try {
                     List<Address> addresses =
