@@ -77,10 +77,10 @@ milestone appears below.  See the syllabus for the due dates of each milestone.
     - Menu items to support creating a new task, viewing categories, and hiding 
       completed tasks
 - **Milestone 3 - week 9 through week 14**
-    - Menu item to delete a task
+    - Menu item to delete a task and a menu item to view category list
     - Display number of completed and incomplete tasks
     - Use of a ViewPager to enable swiping between task details
-    - RecyclerView to display catagories and a ViewPager to display category 
+    - RecyclerView to display categories and a ViewPager to display category 
       details; ability to modify category name.
     - Task details include a map indicating task location
     - Store task and category data to a database in order to persist data
