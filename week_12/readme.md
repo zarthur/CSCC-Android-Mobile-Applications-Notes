@@ -493,13 +493,13 @@ cursor from one result to the next, each time converting the data to a
 *whereClause* and *whereArgs* parameters of the *queryContacts()* method to 
 return results with the specified UUID.  The *getFavoriteContacts()* method 
 uses the *whereClause* and *whereArgs* parameters and iterates through the 
-results.  I
+results.
 
 Finally, we need to update the code associated with the *ContactAdapter* class 
 in `AddressBookFragment.java`.  Right now, if we add a contact, then press the 
 back button, the new contact will not appear in our list of contacts even 
 though it's been saved to the database.  We can create a new method in 
-*ContactAdapter* to update the its list of crimes and then call that method 
+*ContactAdapter* to update the its list of contacts and then call that method 
 in *AddressBookFragment.updateUI()*.
 
 ```java
