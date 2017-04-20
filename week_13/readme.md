@@ -177,7 +177,48 @@ The menu XML should look like this:
 </menu>
 ```
 
-##Syncing Data
+We'll also need to add code to display the preferences screen when the menu 
+item is selected to *AddressBookFragment*: 
+
+```java
+public class AddressBookFragment extends Fragment {
+
+    ...
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_item_create_contact:
+                Contact contact = new Contact();
+                AddressBook.get(getContext()).add(contact);
+                mCallbacks.onContactSelected(contact);
+                return true;
+            case R.id.menu_item_toggle_favorites:
+                mShowFavoritesOnly = !mShowFavoritesOnly;
+                if (mShowFavoritesOnly) {
+                    item.setTitle(R.string.show_all);
+                    mContactAdapter.mContacts =
+                            AddressBook.get(getContext()).getFavoriteContacts();
+                }
+                else {
+                    item.setTitle(R.string.show_favorites);
+                    mContactAdapter.mContacts =
+                            AddressBook.get(getContext()).getContacts();
+                }
+                mContactAdapter.notifyDataSetChanged();
+                return true;
+            case R.id.menu_item_sync_settings:
+                Intent settingsIntent = new Intent(getContext(), SettingsActivity.class);
+                startActivity(settingsIntent);
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+    
+    ...
+}
+```
+## Syncing Data
 Now that we've provided that user with a way of specifying the URL of the 
 remote server and a username and password to use to connect to that server, 
 we're ready to add code.  
