@@ -371,9 +371,10 @@ class ContactDeserializer implements JsonDeserializer<Contact> {
     public Contact deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
         JsonObject object = (JsonObject) json;
         Contact contact = new Contact(UUID.fromString(object.get("uuid").getAsString()));
-        contact.setName(object.get("name").getAsString());
-        contact.setEmail(object.get("email").getAsString());
-        contact.setAddress(object.get("address").getAsString());
+        contact.setName(object.get("name").isJsonNull() ? "" : object.get("name").getAsString());
+        contact.setEmail(object.get("email").isJsonNull() ? "" : object.get("email").getAsString());
+        contact.setAddress(object.get("address").isJsonNull() ? "" : object.get("address").getAsString());
+        contact.setFavorite(object.get("favorite").getAsBoolean());
         return contact;
     }
 }
