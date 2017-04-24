@@ -63,7 +63,7 @@ The next step to using fragments is to modify our activity so that it extends
 the *FragmentActivity* class rather than *AppCompatActivity*. The code in
 the activity Java file should look similar to the following:
 
-```Java
+```java
 package com.arthurneuman.mycontacts;
 
 import android.support.v4.app.FragmentActivity;
@@ -89,7 +89,7 @@ class's constructor instead. To create the file, right-click on your package
 in the *app/java* directory in the project view and select
 *New->Java class...*. Choose a name like `Contact`.
 
-```Java
+```java
 package com.arthurneuman.mycontacts;
 
 import java.util.UUID;

@@ -95,7 +95,7 @@ Right-click on the test package/folder and select **New** and **Java Class**.
 Name the new class `ContactTest`.  Let's start by first importing a couple of 
 classes:
 
-```Java
+```java
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 ```
