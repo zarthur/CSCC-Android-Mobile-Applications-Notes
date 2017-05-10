@@ -166,7 +166,7 @@ you can add an import statement for the *ContactDbSchema* class.
 We're now at a point where we can begin using the database in our app. Recall 
 that the *AddressBook* class is responsible for keeping track of all our 
 contacts; this is where we will make our changes.  To start, let's remove 
-the *mContacts* field and any code that relies on it.  Next, 
+the *mContacts* field and any code that relies on it. 
 
 ```java
 public class AddressBook {
